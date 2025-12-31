@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { Express } from 'express';
 import { registerRoutes } from './routes';
 import { errorHandler } from './middlewares/errorHandler';
@@ -47,7 +48,10 @@ export function configureApp(app: Express, deps: Deps = {}) {
           description: 'API documentation for the Pre-Med Election backend'
         }
       },
-      apis: [__dirname + '/routes/*.ts']
+      // Look for JSDoc annotations in both TypeScript sources (during dev / ts-node)
+      // and compiled JavaScript files (after `tsc` builds to `dist`). Using both
+      // patterns ensures Swagger picks up routes when deployed.
+      apis: [path.join(__dirname, '/routes/*.ts'), path.join(__dirname, '/routes/*.js')]
     };
 
     const swaggerSpec = swaggerJSDoc(swaggerOptions);
