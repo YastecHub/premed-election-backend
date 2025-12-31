@@ -1,0 +1,88 @@
+import express from 'express';
+import cors from 'cors';
+import { Express } from 'express';
+import { registerRoutes } from './routes';
+import { errorHandler } from './middlewares/errorHandler';
+
+const CLIENT_URL = process.env.CLIENT_URL;
+
+interface Deps {
+  io?: any;
+  upload?: any;
+  ocrSemaphore?: any;
+  acquireLock?: (key: string, ttl?: number, retries?: number, retryDelay?: number) => Promise<string | null>;
+  releaseLock?: (key: string, token: string) => Promise<void>;
+  getSystemConfig?: () => Promise<any>;
+}
+
+export function configureApp(app: Express, deps: Deps = {}) {
+  // simple no-op limiters; replace with express-rate-limit config if needed
+  const limiters = {
+    global: (_req: any, _res: any, next: any) => next(),
+    vote: (_req: any, _res: any, next: any) => next(),
+    register: (_req: any, _res: any, next: any) => next(),
+    verify: (_req: any, _res: any, next: any) => next(),
+    adminLogin: (_req: any, _res: any, next: any) => next(),
+  };
+
+  app.use(cors({ origin: CLIENT_URL || true, credentials: true }));
+  app.use(limiters.global);
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+  // Swagger (API docs) - optional at runtime
+  let swaggerMounted = false;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const swaggerJSDoc = require('swagger-jsdoc');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const swaggerUi = require('swagger-ui-express');
+
+    const swaggerOptions = {
+      definition: {
+        openapi: '3.0.0',
+        info: {
+          title: 'Pre-Med Election API',
+          version: '1.0.0',
+          description: 'API documentation for the Pre-Med Election backend'
+        }
+      },
+      apis: [__dirname + '/routes/*.ts']
+    };
+
+    const swaggerSpec = swaggerJSDoc(swaggerOptions);
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+    swaggerMounted = true;
+  } catch (e) {
+    // no-op: swagger not installed in this environment
+  }
+
+  // Register routes with provided dependencies (io/upload/etc)
+  // Expose some dependencies on the express `app` so controllers can access them
+  // via `req.app.get(...)` as implemented in the controllers.
+  if (deps.getSystemConfig) {
+    app.set('getSystemConfig', deps.getSystemConfig);
+  }
+  if (deps.io) {
+    app.set('io', deps.io);
+  }
+
+  registerRoutes(app, {
+    io: deps.io,
+    upload: deps.upload,
+    ocrSemaphore: deps.ocrSemaphore,
+    acquireLock: deps.acquireLock as any,
+    releaseLock: deps.releaseLock as any,
+    getSystemConfig: deps.getSystemConfig as any,
+    // pass through the local no-op limiters
+    registerLimiter: limiters.register,
+    verifyLimiter: limiters.verify,
+    adminLoginLimiter: limiters.adminLogin,
+    voteLimiter: limiters.vote,
+  } as any);
+
+  // Centralized error handler
+  app.use(errorHandler);
+
+  return { app, swaggerMounted, docsPath: swaggerMounted ? '/api-docs' : null };
+}
