@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { logger } from '../utils/logger';
 
 interface VoteDeps {
   acquireLock: (key: string, ttl?: number, retries?: number, retryDelay?: number) => Promise<string | null>;
@@ -10,7 +11,6 @@ interface VoteDeps {
 export const castVote = async (userId: string, candidateId: string, clientIp: string, deps: VoteDeps) => {
   const { acquireLock, releaseLock, getSystemConfig, io } = deps;
 
-  // Check election status
   let config;
   try {
     config = await getSystemConfig();
@@ -32,7 +32,6 @@ export const castVote = async (userId: string, candidateId: string, clientIp: st
     throw e;
   }
 
-  // Check IP blacklist
   try {
     const Election = mongoose.models.Election;
     let election = await Election.findById('current_election');
@@ -52,7 +51,6 @@ export const castVote = async (userId: string, candidateId: string, clientIp: st
     throw e;
   }
 
-  // Acquire lock
   const lockKey = `lock:user:${userId}`;
   let lockToken: string | null = null;
   try {
@@ -107,7 +105,6 @@ export const castVote = async (userId: string, candidateId: string, clientIp: st
 
     await session.commitTransaction();
 
-    // Add IP to blacklist outside transaction
     try {
       const Election = mongoose.models.Election;
       await Election.findByIdAndUpdate(
@@ -116,11 +113,9 @@ export const castVote = async (userId: string, candidateId: string, clientIp: st
         { upsert: true }
       );
     } catch (err: any) {
-      // Log and continue
-      console.warn('Failed to blacklist IP:', err);
+      logger.warn('Failed to blacklist IP:', err);
     }
 
-    // Emit event
     try { io.emit('new_vote', { candidateId, newCount: candidate.voteCount }); } catch (_) {}
 
     return { success: true, message: 'Vote Cast Successfully' };

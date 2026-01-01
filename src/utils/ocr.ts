@@ -1,4 +1,5 @@
 import Tesseract from 'tesseract.js';
+import { logger } from './logger';
 
 type DepartmentMapping = { [department: string]: string[] };
 
@@ -23,18 +24,15 @@ interface InputData {
 
 export const processDocument = async (buffer: Buffer, inputData: InputData) => {
   try {
-    // Check buffer size and content
     if (!buffer || buffer.length === 0) {
       throw new Error("Document file is empty");
     }
 
-    // Check for PDF signature (not supported by Tesseract in this context)
     const bufferStart = buffer.toString('utf8', 0, 5);
     if (bufferStart.includes('%PDF')) {
       throw new Error("PDF files are not supported. Please upload an image file (JPG, PNG) instead.");
     }
 
-    // Check if it looks like an image file
     const magicNumbers = buffer.slice(0, 4);
     const isPNG = magicNumbers[0] === 0x89 && magicNumbers[1] === 0x50;
     const isJPEG = magicNumbers[0] === 0xFF && magicNumbers[1] === 0xD8;
@@ -44,7 +42,6 @@ export const processDocument = async (buffer: Buffer, inputData: InputData) => {
       throw new Error("Invalid image file. Please upload JPG, PNG, or GIF image.");
     }
 
-    // Quick integrity check for JPEGs: ensure JPEG EOI marker (0xFF 0xD9) exists at end
     if (isJPEG) {
       if (buffer.length < 4) {
         throw new Error('Corrupted JPEG: file too small');
@@ -56,7 +53,6 @@ export const processDocument = async (buffer: Buffer, inputData: InputData) => {
       }
     }
 
-    // 1. Recognize Text
     const result = await Tesseract.recognize(buffer, 'eng');
     const extractedText = result.data.text;
     
@@ -65,13 +61,10 @@ export const processDocument = async (buffer: Buffer, inputData: InputData) => {
     }
 
     const normalizedText = extractedText.toLowerCase();
-
-    // 2. Logic Verification
     const normalizedMatric = inputData.matricNumber.trim().toLowerCase();
     const normalizedName = inputData.fullName.trim().toLowerCase();
     const normalizedDept = inputData.department.trim();
 
-    // Check 1: Matric Match
     const matricMatch = normalizedText.includes(normalizedMatric);
     if (!matricMatch) {
       return {
@@ -81,7 +74,6 @@ export const processDocument = async (buffer: Buffer, inputData: InputData) => {
       };
     }
 
-    // Check 2: Name Fuzzy Match
     const nameTokens = normalizedName.split(/\s+/).filter(t => t.length > 2);
     const foundTokens = nameTokens.filter(token => normalizedText.includes(token));
     const matchRatio = foundTokens.length / nameTokens.length;
@@ -95,10 +87,8 @@ export const processDocument = async (buffer: Buffer, inputData: InputData) => {
       };
     }
 
-    // Check 3: Department Keywords
     const keywords = DEPARTMENT_KEYWORDS[normalizedDept as keyof typeof DEPARTMENT_KEYWORDS];
     
-    // If department is not recognized in our allowed list, flag for manual review
     if (!keywords) {
       return {
         success: false,
@@ -124,7 +114,7 @@ export const processDocument = async (buffer: Buffer, inputData: InputData) => {
     };
 
   } catch (error: any) {
-    console.error("OCR Failed:", error);
+    logger.error("OCR Failed:", error);
     const errorMessage = error?.message || String(error);
     throw new Error(`Document verification failed: ${errorMessage}`);
   }

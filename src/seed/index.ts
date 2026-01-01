@@ -1,4 +1,5 @@
 import { Candidate, Admin, AccessCode } from '../models';
+import { logger } from '../utils/logger';
 
 const DEFAULT_CANDIDATES = [
   { name: 'Dr. Sarah "Healer" Ahmed', position: 'Governor', department: 'Medicine & Surgery (MBBS)', photoUrl: 'https://picsum.photos/200/200?random=1', manifesto: 'Better mental health support.', color: 'bg-blue-500' },
@@ -11,7 +12,6 @@ const DEFAULT_CANDIDATES = [
 ];
 
 export async function seedInitialData() {
-  // Insert candidates if they don't already exist by name
   for (const c of DEFAULT_CANDIDATES) {
     const exists = await Candidate.findOne({ name: c.name }).lean().exec();
     if (!exists) {
@@ -19,14 +19,12 @@ export async function seedInitialData() {
     }
   }
 
-  // Ensure super admin exists (upsert)
   await Admin.findOneAndUpdate(
     { username: 'superadmin' },
     { username: 'superadmin', password: 'password123', role: 'super_admin' },
     { upsert: true }
   ).exec();
 
-  // Seed access codes if missing
   if (await AccessCode.countDocuments() === 0) {
     const accessCodes = [
       "OPL-9012", "MAM-7679", "AFT-2838", "CHR-6515", "ERK-5903",
@@ -35,8 +33,8 @@ export async function seedInitialData() {
     ];
 
     await AccessCode.insertMany(accessCodes.map(code => ({ code, isUsed: false })));
-    console.log(`Seeded ${accessCodes.length} access codes`);
+    logger.info(`Seeded ${accessCodes.length} access codes`);
   }
 
-  console.log('Seeding complete');
+  logger.info('Seeding complete');
 }

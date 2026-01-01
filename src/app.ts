@@ -1,11 +1,10 @@
 import express from 'express';
-import cors from 'cors';
 import path from 'path';
 import { Express } from 'express';
 import { registerRoutes } from './routes';
 import { errorHandler } from './middlewares/errorHandler';
-
-const CLIENT_URL = process.env.CLIENT_URL;
+import { setupMiddlewares } from './config/middleware';
+import { logger } from './utils/logger';
 
 interface Deps {
   io?: any;
@@ -17,18 +16,7 @@ interface Deps {
 }
 
 export function configureApp(app: Express, deps: Deps = {}) {
-  const limiters = {
-    global: (_req: any, _res: any, next: any) => next(),
-    vote: (_req: any, _res: any, next: any) => next(),
-    register: (_req: any, _res: any, next: any) => next(),
-    verify: (_req: any, _res: any, next: any) => next(),
-    adminLogin: (_req: any, _res: any, next: any) => next(),
-  };
-
-  app.use(cors({ origin: CLIENT_URL || true, credentials: true }));
-  app.use(limiters.global);
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ limit: '50mb', extended: true }));
+  const { limiters } = setupMiddlewares(app);
 
   let swaggerMounted = false;
   try {
@@ -51,6 +39,7 @@ export function configureApp(app: Express, deps: Deps = {}) {
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     swaggerMounted = true;
   } catch (e) {
+    logger.debug('Swagger dependencies not available');
   }
 
   if (deps.getSystemConfig) {

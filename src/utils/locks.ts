@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { randomUUID } from 'crypto';
+import { logger } from './logger';
 
 export const DEFAULT_LOCK_TTL = 8000;
 
@@ -19,7 +20,7 @@ export async function acquireLock(key: string, ttl = DEFAULT_LOCK_TTL, retries =
     await Lock.create({ key, token, expiresAt });
     return token;
   } catch (err: any) {
-    if (err?.code !== 11000) console.warn('acquireLock create error', err);
+    if (err?.code !== 11000) logger.warn('acquireLock create error', err);
   }
 
   for (let i = 0; i < retries; i++) {
@@ -33,7 +34,7 @@ export async function acquireLock(key: string, ttl = DEFAULT_LOCK_TTL, retries =
 
       if (replaced) return token;
     } catch (e) {
-      console.warn('acquireLock findOneAndUpdate error', e);
+      logger.warn('acquireLock findOneAndUpdate error', e);
     }
     await new Promise(r => setTimeout(r, retryDelay));
   }
@@ -45,6 +46,6 @@ export async function releaseLock(key: string, token: string) {
   try {
     await Lock.findOneAndDelete({ key, token }).exec();
   } catch (e) {
-    console.warn('releaseLock error', e);
+    logger.warn('releaseLock error', e);
   }
 }
