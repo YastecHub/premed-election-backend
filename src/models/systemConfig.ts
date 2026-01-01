@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const SystemConfigSchema = new mongoose.Schema({
-  _id: { type: String, default: 'election_config' }, // Fixed _id for singleton
+  _id: { type: String, default: 'election_config' },
   isElectionActive: { type: Boolean, default: false },
   startTime: { type: Date, default: null },
   endTime: { type: Date, default: null },

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { randomUUID } from 'crypto';
 
-export const DEFAULT_LOCK_TTL = 8000; // ms
+export const DEFAULT_LOCK_TTL = 8000;
 
 const lockSchema = new mongoose.Schema({
   key: { type: String, required: true, unique: true },

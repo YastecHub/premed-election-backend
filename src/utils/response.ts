@@ -1,7 +1,5 @@
 import { Response } from 'express';
 
-// Currently a thin wrapper to preserve existing API responses exactly.
-// This helper centralizes response formatting for future standardization without changing outputs now.
 export const success = (res: Response, payload: any, status = 200) => {
   return res.status(status).json(payload);
 };

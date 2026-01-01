@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const ElectionSchema = new mongoose.Schema({
-  _id: { type: String, default: 'current_election' }, // Fixed _id for singleton
+  _id: { type: String, default: 'current_election' },
   votedIps: {
     type: [String],
     default: [],

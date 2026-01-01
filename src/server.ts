@@ -12,7 +12,6 @@ import { acquireLock, releaseLock } from './utils/locks';
 import { Semaphore } from './utils/semaphore';
 import { seedInitialData } from './seed';
 
-// Load environment variables
 dotenv.config();
 
 process.on('unhandledRejection', (reason) => {
@@ -41,8 +40,6 @@ const upload = multer({
   }),
 });
 
-// acquireLock/releaseLock are implemented in ./utils/locks
-
 const limiters = {
   global: (_req: any, _res: any, next: any) => next(),
   vote: (_req: any, _res: any, next: any) => next(),
@@ -51,7 +48,6 @@ const limiters = {
   adminLogin: (_req: any, _res: any, next: any) => next(),
 };
 
-// Middleware setup is performed by `configureApp` in src/app.ts
 
 // Database Connections
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/premed_election';
@@ -116,7 +112,7 @@ const start = async () => {
     } catch (error) {
       console.error('Error in election end detection:', error);
     }
-  }, 60 * 1000); // Check every minute
+  }, 60 * 1000); 
 
   const PORT = process.env.PORT || 5000;
   server.listen(PORT, () => {
@@ -129,10 +125,6 @@ const start = async () => {
     }
   });
 };
-
-// seeding moved to ./utils/seed.ts
-
-// App configuration happens above via `configureApp`
 
 start().catch(err => {
   console.error("Server startup failed:", err);

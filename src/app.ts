@@ -17,7 +17,6 @@ interface Deps {
 }
 
 export function configureApp(app: Express, deps: Deps = {}) {
-  // simple no-op limiters; replace with express-rate-limit config if needed
   const limiters = {
     global: (_req: any, _res: any, next: any) => next(),
     vote: (_req: any, _res: any, next: any) => next(),
@@ -31,12 +30,9 @@ export function configureApp(app: Express, deps: Deps = {}) {
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-  // Swagger (API docs) - optional at runtime
   let swaggerMounted = false;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const swaggerJSDoc = require('swagger-jsdoc');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const swaggerUi = require('swagger-ui-express');
 
     const swaggerOptions = {
@@ -48,9 +44,6 @@ export function configureApp(app: Express, deps: Deps = {}) {
           description: 'API documentation for the Pre-Med Election backend'
         }
       },
-      // Look for JSDoc annotations in both TypeScript sources (during dev / ts-node)
-      // and compiled JavaScript files (after `tsc` builds to `dist`). Using both
-      // patterns ensures Swagger picks up routes when deployed.
       apis: [path.join(__dirname, '/routes/*.ts'), path.join(__dirname, '/routes/*.js')]
     };
 
@@ -58,12 +51,8 @@ export function configureApp(app: Express, deps: Deps = {}) {
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     swaggerMounted = true;
   } catch (e) {
-    // no-op: swagger not installed in this environment
   }
 
-  // Register routes with provided dependencies (io/upload/etc)
-  // Expose some dependencies on the express `app` so controllers can access them
-  // via `req.app.get(...)` as implemented in the controllers.
   if (deps.getSystemConfig) {
     app.set('getSystemConfig', deps.getSystemConfig);
   }
@@ -78,14 +67,12 @@ export function configureApp(app: Express, deps: Deps = {}) {
     acquireLock: deps.acquireLock as any,
     releaseLock: deps.releaseLock as any,
     getSystemConfig: deps.getSystemConfig as any,
-    // pass through the local no-op limiters
     registerLimiter: limiters.register,
     verifyLimiter: limiters.verify,
     adminLoginLimiter: limiters.adminLogin,
     voteLimiter: limiters.vote,
   } as any);
 
-  // Centralized error handler
   app.use(errorHandler);
 
   return { app, swaggerMounted, docsPath: swaggerMounted ? '/api-docs' : null };

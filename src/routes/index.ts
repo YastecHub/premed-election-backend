@@ -6,7 +6,6 @@ import { createVoteRoutes } from './voteRoutes';
 import { createRegistrationRoutes } from './registrationRoutes';
 import { createCandidatesRoutes } from './candidatesRoutes';
 
-// Dependencies that will be passed from server bootstrap
 interface Deps {
   io: any;
   upload: any;
@@ -34,7 +33,6 @@ export function registerRoutes(app: Express, deps: Deps) {
   app.use('/api/admin', createAdminRoutes({ io: deps.io }));
 
   // Legacy compatibility: some clients call `/api/admins` (no `/admin` prefix).
-  // Forward that to the same controller action so older clients continue to work.
   app.get('/api/admins', (req, res, next) => adminController.list(req, res, next));
 
   // Candidate routes

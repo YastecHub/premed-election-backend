@@ -1,17 +1,15 @@
 export type VerificationStatus = 'unverified' | 'verified' | 'pending_manual_review' | 'rejected';
 
-// 1. The Database Schema (Mongoose Models)
-
 export interface User {
   _id: string;
   matricNumber: string;
   fullName: string;
-  email: string; // Added email for notifications
+  email: string;
   department: string;
   verificationStatus: VerificationStatus;
   hasVoted: boolean;
   ocrConfidenceScore: number;
-  uploadedDocumentUrl?: string; // Simulated URL
+  uploadedDocumentUrl?: string;
   rejectionReason?: string;
   createdAt: Date;
 }
@@ -22,9 +20,9 @@ export interface Candidate {
   position: string;
   photoUrl: string;
   manifesto: string;
-  voteCount: number; // In real DB, this is cached or aggregated
+  voteCount: number;
   isActive: boolean;
-  color: string; // For UI vibes
+  color: string;
 }
 
 export interface Admin {
