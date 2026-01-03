@@ -5,6 +5,7 @@ export { validateAdmin } from './adminValidator';
 export { validateAccessCode } from './accessCodeValidator';
 export { validateSystemConfig } from './systemConfigValidator';
 export { validateElection } from './electionValidator';
+export { validateCategory } from './categoryValidator';
 export { 
   validateAdminLogin,
   validateUserAction,
@@ -21,6 +22,7 @@ import { validateAdmin } from './adminValidator';
 import { validateAccessCode } from './accessCodeValidator';
 import { validateSystemConfig } from './systemConfigValidator';
 import { validateElection } from './electionValidator';
+import { validateCategory } from './categoryValidator';
 import { 
   validateAdminLogin,
   validateUserAction,
@@ -39,6 +41,7 @@ export const validate = {
   accessCode: validateAccessCode,
   systemConfig: validateSystemConfig,
   election: validateElection,
+  category: validateCategory,
   adminLogin: validateAdminLogin,
   userAction: validateUserAction,
   electionToggle: validateElectionToggle,

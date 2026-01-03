@@ -1,4 +1,4 @@
-import { Candidate, Admin, AccessCode } from '../models';
+import { Candidate, Admin, AccessCode, Category } from '../models';
 import { logger } from '../utils/logger';
 
 const DEFAULT_CANDIDATES = [
@@ -9,6 +9,17 @@ const DEFAULT_CANDIDATES = [
   { name: 'Tunde Adebayo', position: 'President', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Tunde', manifesto: 'Improving campus infrastructure and student engagement', voteCount: 0, isActive: true, color: 'bg-green-500' },
   { name: 'Fatima Hassan', position: 'Vice President', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Fatima', manifesto: 'Bridging the gap between students and administration', voteCount: 0, isActive: true, color: 'bg-purple-500' },
   { name: 'Chukwu Emeka', position: 'Secretary', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Chukwu', manifesto: 'Transparent and effective communication', voteCount: 0, isActive: true, color: 'bg-orange-500' }
+];
+
+const DEFAULT_CATEGORIES = [
+  'Pre-med Governor',
+  'Assistant Premed',
+  'Sport Secretary',
+  'Media Coordinator',
+  'President',
+  'Vice President',
+  'Secretary',
+  'Treasurer'
 ];
 
 export async function seedInitialData() {
@@ -34,6 +45,11 @@ export async function seedInitialData() {
 
     await AccessCode.insertMany(accessCodes.map(code => ({ code, isUsed: false })));
     logger.info(`Seeded ${accessCodes.length} access codes`);
+  }
+
+  if (await Category.countDocuments() === 0) {
+    await Category.insertMany(DEFAULT_CATEGORIES.map(name => ({ name })));
+    logger.info(`Seeded ${DEFAULT_CATEGORIES.length} categories`);
   }
 
   logger.info('Seeding complete');

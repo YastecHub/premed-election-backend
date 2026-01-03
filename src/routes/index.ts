@@ -5,6 +5,7 @@ import { createAdminRoutes } from './adminRoutes';
 import { createVoteRoutes } from './voteRoutes';
 import { createRegistrationRoutes } from './registrationRoutes';
 import { createCandidatesRoutes } from './candidatesRoutes';
+import { createCategoryRoutes } from './categoryRoutes';
 
 interface Deps {
   io: any;
@@ -20,21 +21,11 @@ interface Deps {
 }
 
 export function registerRoutes(app: Express, deps: Deps) {
-  // Mount health router
   app.use('/api', createHealthRoutes());
-
-  // Registration routes
   app.use('/api', createRegistrationRoutes({ registerLimiter: deps.registerLimiter, verifyLimiter: deps.verifyLimiter, upload: deps.upload, ocrSemaphore: deps.ocrSemaphore, io: deps.io }));
-
-  // Vote route
   app.use('/api', createVoteRoutes({ voteLimiter: deps.voteLimiter, upload: deps.upload }));
-
-  // Admin routes
   app.use('/api/admin', createAdminRoutes({ io: deps.io }));
-
-  // Legacy compatibility: some clients call `/api/admins` (no `/admin` prefix).
-  app.get('/api/admins', (req, res, next) => adminController.list(req, res, next));
-
-  // Candidate routes
+  app.get('/api/admins', adminController.list);
   app.use('/api', createCandidatesRoutes());
+  app.use('/api', createCategoryRoutes());
 }
