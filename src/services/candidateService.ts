@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { validateCandidate } from '../validators';
 
 export const findAllCandidates = async () => {
   const Candidate = mongoose.models.Candidate;
@@ -6,15 +7,10 @@ export const findAllCandidates = async () => {
 };
 
 export const createCandidate = async (payload: any) => {
-  const { name, position, department, photoUrl, manifesto, color } = payload;
-  if (!name || !position || !department || !photoUrl || !manifesto) {
-    const err: any = new Error('Candidate validation failed: name, position, department, photoUrl and manifesto are required.');
-    err.status = 400;
-    throw err;
-  }
-
+  validateCandidate(payload);
+  
   const Candidate = mongoose.models.Candidate;
-  const candidate = new Candidate({ name, position, department, photoUrl, manifesto, color });
+  const candidate = new Candidate(payload);
   await candidate.save();
   return candidate;
 };

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { validateAdmin } from '../validators';
 
 interface ToggleDeps {
   getSystemConfig: () => Promise<any>;
@@ -6,15 +7,16 @@ interface ToggleDeps {
 }
 
 export const createAdmin = async (payload: { username: string; password: string; role?: string }) => {
-  const { username, password, role } = payload;
+  validateAdmin(payload);
+  
   const Admin = mongoose.models.Admin;
-  const existing = await Admin.findOne({ username });
+  const existing = await Admin.findOne({ username: payload.username });
   if (existing) {
     const e: any = new Error('Username already exists');
     e.status = 400;
     throw e;
   }
-  const admin = new Admin({ username, password, role });
+  const admin = new Admin(payload);
   await admin.save();
   const obj: any = admin.toObject();
   if (obj.password) delete obj.password;

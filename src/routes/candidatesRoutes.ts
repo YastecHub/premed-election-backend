@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { getCandidates, postCandidate, removeCandidate } from '../controllers/candidateController';
+import { validateRequest, validateParam } from '../middlewares/validation';
 
 export function createCandidatesRoutes() {
   const router = Router();
+  
   /**
    * @openapi
    * /api/candidates:
@@ -15,6 +17,7 @@ export function createCandidatesRoutes() {
    *         description: Array of candidate objects
    */
   router.get('/candidates', getCandidates);
+
   /**
    * @openapi
    * /api/candidates:
@@ -43,7 +46,8 @@ export function createCandidatesRoutes() {
    *       200:
    *         description: Created candidate
    */
-  router.post('/candidates', postCandidate);
+  router.post('/candidates', validateRequest('candidate'), postCandidate);
+
   /**
    * @openapi
    * /api/candidates/{id}:
@@ -61,6 +65,7 @@ export function createCandidatesRoutes() {
    *       200:
    *         description: Deletion result
    */
-  router.delete('/candidates/:id', removeCandidate);
+  router.delete('/candidates/:id', validateParam('id'), removeCandidate);
+  
   return router;
 }

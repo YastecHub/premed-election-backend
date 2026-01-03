@@ -1,21 +1,26 @@
 import mongoose from 'mongoose';
 import { processDocument } from '../utils/ocr';
+import { validateUser, validateAccessCodeLogin } from '../validators';
 
-export const registerSimple = async ({ matricNumber, fullName, department, email }: any) => {
+export const registerSimple = async (payload: any) => {
+  validateUser(payload);
+  
   const User = mongoose.models.User;
-  const existing = await User.findOne({ matricNumber });
+  const existing = await User.findOne({ matricNumber: payload.matricNumber });
   if (existing) {
     const err: any = new Error('Matric number already registered');
     err.status = 400;
     throw err;
   }
 
-  const user = new User({ matricNumber, fullName, department, email });
+  const user = new User(payload);
   await user.save();
   return user;
 };
 
 export const registerWithVerification = async (buffer: Buffer, payload: any) => {
+  validateUser(payload);
+  
   const { matricNumber, fullName, department, email } = payload;
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -64,7 +69,10 @@ export const registerWithVerification = async (buffer: Buffer, payload: any) => 
   }
 };
 
-export const loginWithCode = async ({ code, fullName }: any) => {
+export const loginWithCode = async (payload: any) => {
+  validateAccessCodeLogin(payload);
+  
+  const { code, fullName } = payload;
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -132,7 +140,6 @@ export const verifyDocumentForUser = async (userId: string, buffer: Buffer) => {
     const user = await User.findById(userId).session(session);
     if (!user) {
       const err: any = new Error('User not found');
-      // Intentionally leave without status to match original which returned 500 in some cases
       throw err;
     }
 

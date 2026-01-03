@@ -1,5 +1,12 @@
 import { Router } from 'express';
 import * as registrationController from '../controllers/registrationController';
+import { validateRequest } from '../middlewares/validation';
+import { createLimiterMiddleware } from '../middlewares/limiter';
+import { 
+  createRegistrationWithVerificationHandler,
+  createLoginWithCodeHandler,
+  createVerifyHandler
+} from '../controllers/registrationControllerFactory';
 
 interface Deps {
   registerLimiter?: any;
@@ -39,7 +46,7 @@ export function createRegistrationRoutes(deps: Deps = {}) {
    *       200:
    *         description: Registered user
    */
-  router.post('/register', deps.registerLimiter || ((req,res,next)=>next()), registrationController.registerSimple);
+  router.post('/register', createLimiterMiddleware(deps.registerLimiter), validateRequest('user'), registrationController.registerSimple);
 
   /**
    * @openapi
@@ -72,7 +79,12 @@ export function createRegistrationRoutes(deps: Deps = {}) {
    *       200:
    *         description: Registered user with verification status
    */
-  router.post('/register-with-verification', deps.registerLimiter || ((req,res,next)=>next()), upload.single('document'), (req,res,next) => registrationController.registerWithVerification(req,res,next, { ocrSemaphore: deps.ocrSemaphore, io: deps.io }));
+  router.post('/register-with-verification', 
+    createLimiterMiddleware(deps.registerLimiter), 
+    upload.single('document'), 
+    validateRequest('user'), 
+    createRegistrationWithVerificationHandler({ ocrSemaphore: deps.ocrSemaphore, io: deps.io })
+  );
 
   /**
    * @openapi
@@ -96,7 +108,11 @@ export function createRegistrationRoutes(deps: Deps = {}) {
    *       200:
    *         description: Logged-in user
    */
-  router.post('/login-with-code', deps.registerLimiter || ((req,res,next)=>next()), (req,res,next) => registrationController.loginWithCode(req,res,next, { io: deps.io }));
+  router.post('/login-with-code', 
+    createLimiterMiddleware(deps.registerLimiter), 
+    validateRequest('accessCodeLogin'), 
+    createLoginWithCodeHandler({ io: deps.io })
+  );
 
   /**
    * @openapi
@@ -123,7 +139,12 @@ export function createRegistrationRoutes(deps: Deps = {}) {
    *       200:
    *         description: Verification result
    */
-  router.post('/verify', deps.verifyLimiter || ((req,res,next)=>next()), upload.single('document'), (req,res,next) => registrationController.verify(req,res,next, { ocrSemaphore: deps.ocrSemaphore, io: deps.io }));
+  router.post('/verify', 
+    createLimiterMiddleware(deps.verifyLimiter), 
+    upload.single('document'), 
+    validateRequest('verification'), 
+    createVerifyHandler({ ocrSemaphore: deps.ocrSemaphore, io: deps.io })
+  );
 
   return router;
 }

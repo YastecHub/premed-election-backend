@@ -3,6 +3,7 @@ import { healthHandler } from '../controllers/healthController';
 
 export function createHealthRoutes() {
   const router = Router();
+  
   /**
    * @openapi
    * /api/health:
@@ -15,5 +16,6 @@ export function createHealthRoutes() {
    *         description: Service health information
    */
   router.get('/health', healthHandler);
+  
   return router;
 }

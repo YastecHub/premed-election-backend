@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { voteHandler } from '../controllers/voteController';
+import { validateRequest } from '../middlewares/validation';
+import { createLimiterMiddleware } from '../middlewares/limiter';
 
 interface Deps {
   voteLimiter?: any;
@@ -8,7 +10,7 @@ interface Deps {
 
 export function createVoteRoutes(deps: Deps = {}) {
   const router = Router();
-  const upload = deps.upload;
+  
   /**
    * @openapi
    * /api/vote:
@@ -31,6 +33,7 @@ export function createVoteRoutes(deps: Deps = {}) {
    *       200:
    *         description: Vote result
    */
-  router.post('/vote', deps.voteLimiter || ((req,res,next)=>next()), (req,res,next) => voteHandler(req,res,next));
+  router.post('/vote', createLimiterMiddleware(deps.voteLimiter), validateRequest('vote'), voteHandler);
+  
   return router;
 }

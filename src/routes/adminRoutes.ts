@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import * as adminController from '../controllers/adminController';
+import { validateRequest } from '../middlewares/validation';
 
 interface Deps { io?: any }
 
 export function createAdminRoutes(_deps?: Deps) {
   const router = Router();
 
-  router.post('/login', (req, res, next) => adminController.login(req, res, next));
   /**
    * @openapi
    * /api/admin/login:
@@ -29,7 +29,8 @@ export function createAdminRoutes(_deps?: Deps) {
    *       200:
    *         description: Admin object
    */
-  router.get('/pending', (req, res, next) => adminController.pending(req, res, next));
+  router.post('/login', validateRequest('adminLogin'), adminController.login);
+
   /**
    * @openapi
    * /api/admin/pending:
@@ -41,7 +42,8 @@ export function createAdminRoutes(_deps?: Deps) {
    *       200:
    *         description: Array of users
    */
-  router.post('/approve', (req, res, next) => adminController.approve(req, res, next));
+  router.get('/pending', adminController.pending);
+
   /**
    * @openapi
    * /api/admin/approve:
@@ -62,7 +64,8 @@ export function createAdminRoutes(_deps?: Deps) {
    *       200:
    *         description: Updated user
    */
-  router.post('/reject', (req, res, next) => adminController.reject(req, res, next));
+  router.post('/approve', validateRequest('userAction'), adminController.approve);
+
   /**
    * @openapi
    * /api/admin/reject:
@@ -83,7 +86,8 @@ export function createAdminRoutes(_deps?: Deps) {
    *       200:
    *         description: Updated user
    */
-  router.post('/create', (req, res, next) => adminController.create(req, res, next));
+  router.post('/reject', validateRequest('userAction'), adminController.reject);
+
   /**
    * @openapi
    * /api/admin/create:
@@ -108,7 +112,8 @@ export function createAdminRoutes(_deps?: Deps) {
    *       200:
    *         description: Created admin (without password)
    */
-  router.post('/toggle-election', (req, res, next) => adminController.toggleElection(req, res, next));
+  router.post('/create', validateRequest('admin'), adminController.create);
+
   /**
    * @openapi
    * /api/admin/toggle-election:
@@ -131,10 +136,11 @@ export function createAdminRoutes(_deps?: Deps) {
    *       200:
    *         description: Result of the requested action
    */
-  router.get('/admins', (req, res, next) => adminController.list(req, res, next));
+  router.post('/toggle-election', validateRequest('electionToggle'), adminController.toggleElection);
+
   /**
    * @openapi
-   * /api/admins:
+   * /api/admin/admins:
    *   get:
    *     summary: List admins (without password)
    *     tags:
@@ -143,6 +149,7 @@ export function createAdminRoutes(_deps?: Deps) {
    *       200:
    *         description: Array of admin users
    */
+  router.get('/admins', adminController.list);
 
   return router;
 }
