@@ -3,7 +3,6 @@ import * as userService from '../services/userService';
 import fs from 'fs';
 import { success } from '../utils/response';
 
-// Simple registration
 export const registerSimple = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await userService.registerSimple(req.body);
@@ -13,7 +12,6 @@ export const registerSimple = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-// register-with-verification: expects deps { ocrSemaphore, io }
 export const registerWithVerification = async (req: any, res: Response, next: NextFunction, deps: any) => {
   const { ocrSemaphore, io } = deps || {};
   const { matricNumber, fullName, department, email } = req.body || {};
@@ -35,7 +33,6 @@ export const registerWithVerification = async (req: any, res: Response, next: Ne
   }
 };
 
-// login-with-code: expects deps { io }
 export const loginWithCode = async (req: Request, res: Response, next: NextFunction, deps: any) => {
   const { io } = deps || {};
   try {
@@ -54,7 +51,6 @@ export const loginWithCode = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-// verify endpoint: expects deps { ocrSemaphore, io }
 export const verify = async (req: any, res: Response, next: NextFunction, deps: any) => {
   const { ocrSemaphore, io } = deps || {};
   const { userId } = req.body || {};
