@@ -1,10 +1,5 @@
 # Pre-Med Election System - Backend
 
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.2+-blue.svg)](https://www.typescriptlang.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-8.0+-green.svg)](https://www.mongodb.com/)
-[![Express](https://img.shields.io/badge/Express-4.18+-lightgrey.svg)](https://expressjs.com/)
-
 A robust, scalable backend API for managing pre-medical student elections with real-time features, document verification, and comprehensive validation.
 
 ## 🚀 Features
@@ -141,14 +136,14 @@ GET /api/health                      # System health check
 ### User Schema
 ```typescript
 {
-  matricNumber: string,        // Unique student ID
-  fullName: string,           // Student full name
-  email: string,              // Contact email
-  department: string,         // Academic department
-  verificationStatus: enum,   // Verification state
-  hasVoted: boolean,          // Voting status
-  ocrConfidenceScore: number, // Document verification score
-  rejectionReason?: string,   // If verification failed
+  matricNumber: string,
+  fullName: string,
+  email: string,
+  department: string,
+  verificationStatus: enum,
+  hasVoted: boolean,
+  ocrConfidenceScore: number,
+  rejectionReason?: string,
   createdAt: Date
 }
 ```
@@ -156,14 +151,14 @@ GET /api/health                      # System health check
 ### Candidate Schema
 ```typescript
 {
-  name: string,               // Candidate name
-  position: string,           // Election position
-  department: string,         // Academic department
-  photoUrl: string,           // Profile image URL
-  manifesto: string,          // Campaign manifesto
-  voteCount: number,          // Current vote tally
-  isActive: boolean,          // Campaign status
-  color: string              // UI theme color
+  name: string,
+  position: string,
+  department: string,
+  photoUrl: string,
+  manifesto: string,
+  voteCount: number,
+  isActive: boolean,
+  color: string
 }
 ```
 
@@ -190,10 +185,10 @@ GET /api/health                      # System health check
 
 ### Scripts
 ```bash
-npm run dev      # Development server with hot reload
-npm run build    # TypeScript compilation
-npm start        # Production server
-npm run seed     # Manual database seeding
+npm run dev
+npm run build
+npm start
+npm run seed
 ```
 
 ### Project Structure
