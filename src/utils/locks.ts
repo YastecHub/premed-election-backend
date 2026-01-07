@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import { randomUUID } from 'crypto';
 import { logger } from './logger';
 export const DEFAULT_LOCK_TTL = 8000;
-
 const lockSchema = new mongoose.Schema({
   key: { type: String, required: true, unique: true },
   token: { type: String, required: true },
