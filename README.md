@@ -123,7 +123,17 @@ GET  /api/admin/pending              # Users pending review
 POST /api/admin/approve              # Approve user verification
 POST /api/admin/reject               # Reject user verification
 POST /api/admin/create               # Create admin account
+GET  /api/admin/election-status      # Get election status
 POST /api/admin/toggle-election      # Control election state
+```
+
+### Category Management
+```http
+GET  /api/categories                 # List all categories (for dropdowns)
+GET  /api/categories/:id             # Get single category
+POST /api/categories                 # Create new category
+PUT  /api/categories/:id             # Update category
+DELETE /api/categories/:id           # Delete category
 ```
 
 ### System Health

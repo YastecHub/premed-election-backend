@@ -44,12 +44,23 @@ export const reject = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
+export const getElectionStatus = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const getSystemConfig = req.app.get('getSystemConfig');
+    const status = await adminService.getElectionStatus({ getSystemConfig });
+    return success(res, status);
+  } catch (err) {
+    return next(err);
+  }
+};
+
 export const toggleElection = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { action, durationMinutes } = req.body;
+    const { action, duration, durationMinutes } = req.body;
+    const durationParam = duration || durationMinutes;
     const getSystemConfig = req.app.get('getSystemConfig');
     const io = req.app.get('io');
-    const result = await adminService.toggleElection(action, durationMinutes, { getSystemConfig, io });
+    const result = await adminService.toggleElection(action, durationParam, { getSystemConfig, io });
     return success(res, result, 200);
   } catch (err) {
     return next(err);

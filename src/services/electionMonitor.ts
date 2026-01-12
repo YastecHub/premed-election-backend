@@ -12,7 +12,7 @@ export const startElectionMonitoring = (io: any) => {
         await config.save();
 
         logger.info('Election automatically ended at', new Date().toISOString());
-        io.emit('election_ended', { reason: 'Election duration expired' });
+        io.emit('ELECTION_ENDED');
       }
     } catch (error) {
       logger.error('Error in election end detection:', error);

@@ -13,10 +13,11 @@ export function validateElectionToggle(data: any) {
   validateEnum(data.action, 'action', ['start', 'pause', 'resume', 'stop']);
   
   if (data.action === 'start') {
-    validateRequired(data.durationMinutes, 'durationMinutes');
-    const duration = Number(data.durationMinutes);
-    if (isNaN(duration) || duration <= 0 || duration > 10080) {
-      throw new ValidationError('durationMinutes', 'Duration must be between 1 and 10080 minutes');
+    const duration = data.durationMinutes || data.duration;
+    validateRequired(duration, 'duration');
+    const durationNum = Number(duration);
+    if (isNaN(durationNum) || durationNum <= 0 || durationNum > 10080) {
+      throw new ValidationError('duration', 'Duration must be between 1 and 10080 minutes');
     }
   }
 }

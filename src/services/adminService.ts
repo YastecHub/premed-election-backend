@@ -47,10 +47,12 @@ export const rejectUser = async (userId: string, io?: any) => {
   return user;
 };
 
-export const toggleElection = async (action: string, durationMinutes: number | undefined, deps: ToggleDeps) => {
+export const toggleElection = async (action: string, durationParam: number | undefined, deps: ToggleDeps) => {
   const { getSystemConfig, io } = deps;
   const config = await getSystemConfig();
+  
   if (action === 'start') {
+    const durationMinutes = durationParam;
     if (!durationMinutes || durationMinutes <= 0) {
       const e: any = new Error('Duration must be a positive number of minutes');
       e.status = 400;
@@ -65,7 +67,7 @@ export const toggleElection = async (action: string, durationMinutes: number | u
     config.adminSetDurationMinutes = durationMinutes;
     config.updatedAt = new Date();
     await config.save();
-    try { if (io) io.emit('election_started', { startTime: config.startTime, endTime: config.endTime, isActive: true }); } catch (e) {}
+    try { if (io) io.emit('ELECTION_STARTED', { endTime: endTime.toISOString() }); } catch (e) {}
     return {
       action: 'start',
       isActive: true,
@@ -90,7 +92,7 @@ export const toggleElection = async (action: string, durationMinutes: number | u
     config.isElectionActive = false;
     config.updatedAt = new Date();
     await config.save();
-    try { if (io) io.emit('election_paused', { reason: 'Paused by administrator', endTime: config.endTime, remainingMs: config.endTime ? Math.max(0, config.endTime.getTime() - now) : 0 }); } catch (e) {}
+    try { if (io) io.emit('ELECTION_PAUSED', { endTime: config.endTime ? config.endTime.toISOString() : null }); } catch (e) {}
     return {
       action: 'pause',
       isActive: false,
@@ -113,7 +115,7 @@ export const toggleElection = async (action: string, durationMinutes: number | u
     config.isElectionActive = true;
     config.updatedAt = new Date();
     await config.save();
-    try { if (io) io.emit('election_resumed', { endTime: config.endTime, remainingMs: config.endTime.getTime() - now }); } catch (e) {}
+    try { if (io) io.emit('ELECTION_RESUMED', { endTime: config.endTime.toISOString() }); } catch (e) {}
     return {
       action: 'resume',
       isActive: true,
@@ -126,7 +128,7 @@ export const toggleElection = async (action: string, durationMinutes: number | u
     config.endTime = new Date();
     config.updatedAt = new Date();
     await config.save();
-    try { if (io) io.emit('election_ended', { reason: 'Election stopped by administrator' }); } catch (e) {}
+    try { if (io) io.emit('ELECTION_ENDED'); } catch (e) {}
     return {
       action: 'stop',
       isActive: false,
@@ -156,6 +158,38 @@ export const loginAdmin = async (username: string, password: string) => {
 export const getPendingUsers = async () => {
   const User = mongoose.models.User;
   return await User.find({ verificationStatus: 'pending_manual_review' });
+};
+
+export const getElectionStatus = async (deps: { getSystemConfig: () => Promise<any> }) => {
+  const { getSystemConfig } = deps;
+  const config = await getSystemConfig();
+  const now = Date.now();
+  
+  let status: string;
+  let isActive = false;
+  let isPaused = false;
+  let endTime: string | null = null;
+  
+  if (!config.startTime) {
+    status = 'not_started';
+  } else if (config.endTime && now >= config.endTime.getTime()) {
+    status = 'ended';
+  } else if (config.isElectionActive) {
+    status = 'active';
+    isActive = true;
+    endTime = config.endTime ? config.endTime.toISOString() : null;
+  } else {
+    status = 'paused';
+    isPaused = true;
+    endTime = config.endTime ? config.endTime.toISOString() : null;
+  }
+  
+  return {
+    status,
+    isActive,
+    isPaused,
+    endTime
+  };
 };
 
 export const listAdmins = async () => {
