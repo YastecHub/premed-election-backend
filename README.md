@@ -91,6 +91,9 @@ Visit `http://localhost:5000/api-docs` for interactive Swagger UI
 | `CLIENT_URL` | Frontend origin for CORS | - | ❌ |
 | `OCR_MAX_CONCURRENCY` | Concurrent OCR workers | `2` | ❌ |
 | `LOG_LEVEL` | Logging level (debug/info/warn/error) | `info` | ❌ |
+| `GEMINI_API_KEY` | Google Gemini API key for OCR fallback | - | ❌ |
+| `OCR_CONFIDENCE_THRESHOLD` | Minimum confidence to skip Gemini fallback | `0.7` | ❌ |
+| `ENABLE_GEMINI_FALLBACK` | Enable Gemini AI as OCR fallback | `true` | ❌ |
 
 ### Auto-Seeding
 On first startup, the system automatically seeds:
@@ -225,9 +228,10 @@ npm run seed
 ## 🔧 Advanced Features
 
 ### Document Processing
-- **OCR Engine** - Tesseract.js for text extraction
+- **Dual OCR Engine** - Tesseract.js (primary) + Gemini AI (fallback)
+- **Smart Fallback** - Automatically uses Gemini when Tesseract confidence < 70%
 - **Validation Pipeline** - Multi-stage document verification
-- **Confidence Scoring** - OCR accuracy assessment
+- **Confidence Scoring** - OCR accuracy assessment from both engines
 - **Format Support** - JPG, PNG, GIF image formats
 
 ### Election Management

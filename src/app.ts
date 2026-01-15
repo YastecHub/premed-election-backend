@@ -32,7 +32,7 @@ export function configureApp(app: Express, deps: Deps = {}) {
           description: 'API documentation for the Pre-Med Election backend'
         }
       },
-      apis: [path.join(__dirname, '/routes/*.ts'), path.join(__dirname, '/routes/*.js')]
+      apis: [path.join(__dirname, '/routes/*.ts'), path.join(__dirname, '/routes/*.js'), path.join(__dirname, '/controllers/*.ts'), path.join(__dirname, '/controllers/*.js')]
     };
 
     const swaggerSpec = swaggerJSDoc(swaggerOptions);
