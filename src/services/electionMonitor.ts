@@ -1,8 +1,8 @@
 import { getSystemConfig } from '../config/database';
 import { logger } from '../utils/logger';
 
-export const startElectionMonitoring = (io: any) => {
-  setInterval(async () => {
+export const startElectionMonitoring = (io: any): NodeJS.Timeout => {
+  const interval = setInterval(async () => {
     try {
       const config = await getSystemConfig();
 
@@ -18,4 +18,6 @@ export const startElectionMonitoring = (io: any) => {
       logger.error('Error in election end detection:', error);
     }
   }, 60 * 1000);
+  
+  return interval;
 };

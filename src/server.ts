@@ -1,5 +1,6 @@
 import express from 'express';
 import http from 'http';
+import mongoose from 'mongoose';
 import { config } from './config';
 import { connectDatabase, getSystemConfig } from './config/database';
 import { createSocketServer } from './config/socket';
@@ -19,6 +20,43 @@ process.on('uncaughtException', (err) => {
   logger.error('Uncaught Exception:', err instanceof Error ? err.stack || err.message : String(err));
 });
 
+let server: http.Server;
+let monitorInterval: NodeJS.Timeout;
+let io: any;
+
+const gracefulShutdown = async (signal: string) => {
+  logger.info(`${signal} received, starting graceful shutdown...`);
+  
+  if (server) {
+    server.close(() => {
+      logger.info('HTTP server closed');
+    });
+  }
+  
+  if (monitorInterval) {
+    clearInterval(monitorInterval);
+    logger.info('Election monitor stopped');
+  }
+  
+  if (io) {
+    io.close(() => {
+      logger.info('Socket.IO closed');
+    });
+  }
+  
+  try {
+    await mongoose.connection.close();
+    logger.info('MongoDB connection closed');
+  } catch (err) {
+    logger.error('Error closing MongoDB:', err);
+  }
+  
+  process.exit(0);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
 const start = async () => {
   try {
     await connectDatabase();
@@ -26,8 +64,8 @@ const start = async () => {
     await seedInitialData();
 
     const app = express();
-    const server = http.createServer(app);
-    const io = createSocketServer(server);
+    server = http.createServer(app);
+    io = createSocketServer(server);
     const upload = createUpload();
     const ocrSemaphore = new Semaphore(config.ocrMaxConcurrency);
 
@@ -40,7 +78,7 @@ const start = async () => {
       getSystemConfig
     });
 
-    startElectionMonitoring(io);
+    monitorInterval = startElectionMonitoring(io);
 
     server.listen(config.port, () => {
       logger.info(`Server running on http://localhost:${config.port}`);

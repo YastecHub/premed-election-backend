@@ -1,0 +1,43 @@
+name: Health Check Monitor
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    
+    steps:
+      - name: Check Backend Health
+        run: |
+          HEALTH_URL="${{ secrets.BACKEND_URL }}/api/health"
+          
+          echo "Checking health endpoint: $HEALTH_URL"
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 10 "$HEALTH_URL" || echo "000")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response Body: $BODY"
+          
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Health check passed"
+            exit 0
+          elif [ "$HTTP_CODE" -eq 000 ]; then
+            echo "❌ Health check failed - endpoint unreachable"
+            exit 1
+          else
+            echo "⚠️ Health check returned non-200 status: $HTTP_CODE"
+            exit 1
+          fi
+        continue-on-error: false
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "🚨 Backend health check failed at $(date -u)"
+          echo "Consider checking server logs and memory usage"

@@ -95,6 +95,15 @@ Visit `http://localhost:5000/api-docs` for interactive Swagger UI
 | `OCR_CONFIDENCE_THRESHOLD` | Minimum confidence to skip Gemini fallback | `0.7` | ❌ |
 | `ENABLE_GEMINI_FALLBACK` | Enable Gemini AI as OCR fallback | `true` | ❌ |
 
+### MongoDB Connection Pooling
+The system uses optimized connection pooling:
+- **maxPoolSize**: 10 connections (prevents excessive connections)
+- **minPoolSize**: 2 connections (maintains baseline availability)
+- **maxIdleTimeMS**: 60 seconds (closes idle connections)
+- **socketTimeoutMS**: 45 seconds (prevents hanging operations)
+
+These settings are automatically applied and optimized for production use.
+
 ### Auto-Seeding
 On first startup, the system automatically seeds:
 - **Demo Candidates** - Sample election candidates
@@ -221,9 +230,20 @@ npm run seed
 - **Performance** - Non-blocking async logging
 
 ### Health Monitoring
-- **Health Endpoint** - `/api/health` for system status
+- **Health Endpoint** - `/api/health` for system status with memory metrics
 - **Database Connectivity** - MongoDB connection monitoring
-- **Service Dependencies** - External service health checks
+- **Memory Tracking** - Real-time heap and RSS monitoring
+- **GitHub Actions** - Automated health checks every 5 minutes
+
+### Memory Leak Prevention
+- **Graceful Shutdown** - Proper resource cleanup on SIGTERM/SIGINT
+- **Socket Cleanup** - Automatic disconnect handling
+- **Payload Limits** - 10MB request size limit
+- **PM2 Integration** - Auto-restart on high memory usage
+
+📖 **See [MEMORY_LEAK_PREVENTION.md](MEMORY_LEAK_PREVENTION.md)** for detailed information
+📖 **See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** for production setup
+📖 **See [QUICK_REFERENCE.md](QUICK_REFERENCE.md)** for common commands
 
 ## 🔧 Advanced Features
 

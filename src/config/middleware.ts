@@ -15,8 +15,8 @@ export const setupMiddlewares = (app: Express) => {
 
   app.use(cors({ origin: config.clientUrl || true, credentials: true }));
   app.use(limiters.global);
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ limit: '50mb', extended: true }));
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
   return { limiters };
 };

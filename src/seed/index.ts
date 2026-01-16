@@ -23,6 +23,16 @@ const DEFAULT_CATEGORIES = [
 ];
 
 export async function seedInitialData() {
+  const candidateCount = await Candidate.countDocuments();
+  const adminCount = await Admin.countDocuments();
+  const accessCodeCount = await AccessCode.countDocuments();
+  const categoryCount = await Category.countDocuments();
+
+  if (candidateCount > 0 && adminCount > 0 && accessCodeCount > 0 && categoryCount > 0) {
+    logger.info('Database already seeded, skipping...');
+    return;
+  }
+
   for (const c of DEFAULT_CANDIDATES) {
     const exists = await Candidate.findOne({ name: c.name }).lean().exec();
     if (!exists) {
