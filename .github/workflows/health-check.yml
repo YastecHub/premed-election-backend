@@ -2,42 +2,70 @@ name: Health Check Monitor
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    # Run every 10 minutes (Render free tier cold-starts after ~15 min inactivity)
+    - cron: '*/10 * * * *'
   workflow_dispatch:
+
+env:
+  # Use environment variable or default to Render production URL
+  BACKEND_URL: https://pre-med-server.onrender.com
 
 jobs:
   health-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 3
     
     steps:
-      - name: Check Backend Health
+      - name: Check Backend Health (with retry for cold-start)
         run: |
-          HEALTH_URL="${{ secrets.BACKEND_URL }}/api/health"
+          HEALTH_URL="${{ env.BACKEND_URL }}/api/health"
+          MAX_RETRIES=3
+          RETRY_DELAY=5
           
-          echo "Checking health endpoint: $HEALTH_URL"
+          echo "🏥 Checking health endpoint: $HEALTH_URL"
+          echo "⏱️  Retries: $MAX_RETRIES (Render cold-start handling)"
           
-          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 10 "$HEALTH_URL" || echo "000")
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | sed '$d')
+          for attempt in $(seq 1 $MAX_RETRIES); do
+            echo ""
+            echo "Attempt $attempt/$MAX_RETRIES..."
+            
+            RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 30 "$HEALTH_URL" 2>&1 || echo "000")
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | sed '$d')
+            
+            echo "HTTP Status: $HTTP_CODE"
+            if [ -n "$BODY" ] && [ "$BODY" != "000" ]; then
+              echo "Response: $BODY"
+            fi
+            
+            if [ "$HTTP_CODE" -eq 200 ]; then
+              echo "✅ Health check PASSED on attempt $attempt"
+              exit 0
+            fi
+            
+            # Wait before retry (except on last attempt)
+            if [ $attempt -lt $MAX_RETRIES ]; then
+              echo "⏳ Waiting ${RETRY_DELAY}s before retry..."
+              sleep $RETRY_DELAY
+            fi
+          done
           
-          echo "HTTP Status: $HTTP_CODE"
-          echo "Response Body: $BODY"
-          
-          if [ "$HTTP_CODE" -eq 200 ]; then
-            echo "✅ Health check passed"
-            exit 0
-          elif [ "$HTTP_CODE" -eq 000 ]; then
-            echo "❌ Health check failed - endpoint unreachable"
-            exit 1
-          else
-            echo "⚠️ Health check returned non-200 status: $HTTP_CODE"
-            exit 1
-          fi
+          echo ""
+          echo "❌ Health check FAILED after $MAX_RETRIES attempts"
+          echo "⚠️  This may be due to:"
+          echo "   - Render backend is offline"
+          echo "   - Cold-start taking longer than 90 seconds"
+          echo "   - Network connectivity issues"
+          exit 1
         continue-on-error: false
 
       - name: Notify on Failure
         if: failure()
         run: |
           echo "🚨 Backend health check failed at $(date -u)"
-          echo "Consider checking server logs and memory usage"
+          echo "📊 Check Render dashboard for:"
+          echo "   - Server status and restart"
+          echo "   - Memory usage/limits"
+          echo "   - Build/deployment logs"
+          echo ""
+          echo "🔗 Dashboard: https://dashboard.render.com"
