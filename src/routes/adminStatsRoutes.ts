@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { hardReset, clearVotes } from '../controllers/resetController';
-import { getVoterStats, getPendingUsers, getVotingProgress } from '../controllers/adminStatsController';
+import { getVoterStats, getPendingUsers, getVotingProgress, getElectionStatus } from '../controllers/adminStatsController';
 
 export function createResetRoutes() {
   const router = Router();
@@ -84,6 +84,19 @@ export function createAdminStatsRoutes() {
    *         description: Progress data (eligible, voted, percent)
    */
   router.get('/progress', getVotingProgress);
+
+  /**
+   * @openapi
+   * /api/admin/election-status:
+   *   get:
+   *     summary: "Get current election status (is active, times, progress)"
+   *     tags:
+   *       - Admin Stats
+   *     responses:
+   *       200:
+   *         description: Election status data
+   */
+  router.get('/election-status', getElectionStatus);
 
   return router;
 }

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { User } from '../models';
+import { User, SystemConfig } from '../models';
 import { logger } from '../utils/logger';
 import { success } from '../utils/response';
 
@@ -70,6 +70,30 @@ export async function getPendingUsers(req: Request, res: Response, next: NextFun
     success(res, {
       count: pendingUsers.length,
       users: pendingUsers
+    }, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Get current election status
+ */
+export async function getElectionStatus(req: Request, res: Response, next: NextFunction) {
+  try {
+    const systemConfig = await SystemConfig.findById('election_config').exec();
+    const totalEligible = await User.countDocuments({ isVerified: true });
+    const totalVoted = await User.countDocuments({ hasVoted: true });
+    const progressPercent = totalEligible > 0 ? Math.round((totalVoted / totalEligible) * 100) : 0;
+
+    success(res, {
+      isActive: systemConfig?.isElectionActive || false,
+      startTime: systemConfig?.startTime,
+      endTime: systemConfig?.endTime,
+      totalEligible,
+      totalVoted,
+      progressPercent,
+      remaining: totalEligible - totalVoted
     }, 200);
   } catch (err) {
     next(err);

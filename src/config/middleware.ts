@@ -13,7 +13,33 @@ export const setupMiddlewares = (app: Express) => {
     adminLogin: (_req: any, _res: any, next: any) => next(),
   };
 
-  app.use(cors({ origin: config.clientUrl || true, credentials: true }));
+  // Configure CORS for both local development and production
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://premedelection.vercel.app',
+    ...(config.clientUrl ? [config.clientUrl] : [])
+  ];
+
+  app.use(cors({ 
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+      
+      // Check if origin is in allowed list or allow all in dev
+      if (process.env.NODE_ENV !== 'production' || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-developer-key', 'x-admin-key']
+  }));
+
   app.use(limiters.global);
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
