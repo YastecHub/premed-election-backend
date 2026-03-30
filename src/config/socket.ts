@@ -4,25 +4,11 @@ import { config } from './index';
 import { logger } from '../utils/logger';
 
 export const createSocketServer = (server: http.Server) => {
-  const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://premedelection.vercel.app',
-    ...(config.clientUrl ? [config.clientUrl] : [])
-  ];
-
   const io = new Server(server, {
     cors: {
-      origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
-        }
-      },
+      origin: '*',
       methods: ['GET', 'POST'],
-      credentials: true,
-      allowedHeaders: ['Content-Type', 'Authorization']
+      credentials: true
     },
     pingTimeout: 60000,
     pingInterval: 25000

@@ -13,32 +13,9 @@ export const setupMiddlewares = (app: Express) => {
     adminLogin: (_req: any, _res: any, next: any) => next(),
   };
 
-  // Configure CORS for both local development and production
-  const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://premedelection.vercel.app',
-    ...(config.clientUrl ? [config.clientUrl] : [])
-  ];
-
+  // Allow all origins
   app.use(cors({ 
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) {
-        return callback(null, true);
-      }
-      
-      // In production, check allowed origins; in dev, allow all
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else if (process.env.NODE_ENV !== 'production') {
-        callback(null, true);
-      } else {
-        // In production, still allow but log it
-        console.warn('CORS: Origin not in whitelist:', origin);
-        callback(null, true);
-      }
-    },
+    origin: '*',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-developer-key', 'x-admin-key']
