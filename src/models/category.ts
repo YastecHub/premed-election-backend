@@ -11,4 +11,12 @@ CategorySchema.pre('save', function(next) {
   next();
 });
 
-export const Category = mongoose.models.Category || mongoose.model('Category', CategorySchema);
+let Category: any;
+try {
+  Category = mongoose.models.Category || mongoose.model('Category', CategorySchema);
+} catch (error) {
+  console.error('Error creating Category model:', error);
+  Category = undefined;
+}
+
+export { Category };

@@ -14,7 +14,23 @@ const UserSchema = new mongoose.Schema({
   ocrConfidenceScore: { type: Number, default: 0 },
   rejectionReason: { type: String },
   uploadedDocumentPath: { type: String },
-  createdAt: { type: Date, default: Date.now }
+  
+  // PWA & Notifications
+  pushSubscription: {
+    endpoint: String,
+    keys: {
+      auth: String,
+      p256dh: String
+    }
+  },
+  
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Virtual for backward compatibility
+UserSchema.virtual('isVerified').get(function() {
+  return this.verificationStatus === 'verified';
 });
 
 export const User = mongoose.models.User || mongoose.model('User', UserSchema);

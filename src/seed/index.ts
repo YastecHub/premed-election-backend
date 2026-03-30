@@ -23,12 +23,17 @@ const DEFAULT_CATEGORIES = [
 ];
 
 export async function seedInitialData() {
+  logger.info('Seed: Candidate:', typeof Candidate, Candidate?.constructor?.name);
+  logger.info('Seed: Admin:', typeof Admin, Admin?.constructor?.name);
+  logger.info('Seed: AccessCode:', typeof AccessCode, AccessCode?.constructor?.name);
+  logger.info('Seed: Category:', typeof Category, Category?.constructor?.name);
+  
   const candidateCount = await Candidate.countDocuments();
   const adminCount = await Admin.countDocuments();
   const accessCodeCount = await AccessCode.countDocuments();
-  const categoryCount = await Category.countDocuments();
+  const categoryCount = Category ? (await Category.countDocuments()) : 0;
 
-  if (candidateCount > 0 && adminCount > 0 && accessCodeCount > 0 && categoryCount > 0) {
+  if (candidateCount > 0 && adminCount > 0 && accessCodeCount > 0 && (Category ? categoryCount > 0 : true)) {
     logger.info('Database already seeded, skipping...');
     return;
   }
@@ -57,9 +62,13 @@ export async function seedInitialData() {
     logger.info(`Seeded ${accessCodes.length} access codes`);
   }
 
-  if (await Category.countDocuments() === 0) {
-    await Category.insertMany(DEFAULT_CATEGORIES.map(name => ({ name })));
-    logger.info(`Seeded ${DEFAULT_CATEGORIES.length} categories`);
+  if (Category) {
+    if (await Category.countDocuments() === 0) {
+      await Category.insertMany(DEFAULT_CATEGORIES.map(name => ({ name })));
+      logger.info(`Seeded ${DEFAULT_CATEGORIES.length} categories`);
+    }
+  } else {
+    logger.warn('Category model is undefined, skipping category seeding');
   }
 
   logger.info('Seeding complete');

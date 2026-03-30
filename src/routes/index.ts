@@ -6,6 +6,8 @@ import { createVoteRoutes } from './voteRoutes';
 import { createRegistrationRoutes } from './registrationRoutes';
 import { createCandidatesRoutes } from './candidatesRoutes';
 import { createCategoryRoutes } from './categoryRoutes';
+import { createAdminStatsRoutes, createResetRoutes } from './adminStatsRoutes';
+import { createNotificationRoutes } from './notificationRoutes';
 import ocrTestRoutes from './ocrTestRoutes';
 
 interface Deps {
@@ -26,6 +28,11 @@ export function registerRoutes(app: Express, deps: Deps) {
   app.use('/api', createRegistrationRoutes({ registerLimiter: deps.registerLimiter, verifyLimiter: deps.verifyLimiter, upload: deps.upload, ocrSemaphore: deps.ocrSemaphore, io: deps.io }));
   app.use('/api', createVoteRoutes({ voteLimiter: deps.voteLimiter, upload: deps.upload }));
   app.use('/api/admin', createAdminRoutes({ io: deps.io }));
+  app.use('/api/admin', createAdminStatsRoutes());
+  app.use('/api/admin', createResetRoutes());
+  app.use('/api/election', createAdminStatsRoutes()); // Reuse stats for voting progress endpoint
+  app.use('/api/notifications', createNotificationRoutes());
+  app.use('/api/admin/notifications', createNotificationRoutes());
   app.get('/api/admins', adminController.list);
   app.use('/api', createCandidatesRoutes());
   app.use('/api', createCategoryRoutes());
