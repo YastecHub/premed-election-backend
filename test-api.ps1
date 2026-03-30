@@ -17,7 +17,8 @@ try {
     $response = Invoke-WebRequest -Uri "$BaseUrl/api/health" -UseBasicParsing
     Write-Host "✅ Server is running" -ForegroundColor Green
     Write-Host "Response: $($response.StatusCode)" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "❌ Server is not running: $_" -ForegroundColor Red
     exit 1
 }
@@ -27,14 +28,15 @@ Write-Host "`n[TEST 2] Get Voter Stats (Developer View)..." -ForegroundColor Yel
 try {
     $response = Invoke-WebRequest `
         -Uri "$BaseUrl/api/admin/stats" `
-        -Headers @{"x-developer-key" = $DeveloperKey} `
+        -Headers @{"x-developer-key" = $DeveloperKey } `
         -UseBasicParsing
     $data = $response.Content | ConvertFrom-Json
     Write-Host "✅ Got stats" -ForegroundColor Green
     Write-Host "Total Registered: $($data.summary.totalRegisteredVoters)" -ForegroundColor Green
     Write-Host "Total Verified: $($data.summary.totalVerified)" -ForegroundColor Green
     Write-Host "Total Voted: $($data.summary.totalVoted)" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "❌ Error: $_" -ForegroundColor Red
 }
 
@@ -45,7 +47,8 @@ try {
     $data = $response.Content | ConvertFrom-Json
     Write-Host "✅ Got pending users" -ForegroundColor Green
     Write-Host "Count: $($data.count)" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "❌ Error: $_" -ForegroundColor Red
 }
 
@@ -58,7 +61,8 @@ try {
     Write-Host "Eligible: $($data.eligible)" -ForegroundColor Green
     Write-Host "Voted: $($data.totalVoted)" -ForegroundColor Green
     Write-Host "Progress: $($data.progressPercent)%" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "❌ Error: $_" -ForegroundColor Red
 }
 
@@ -71,7 +75,8 @@ try {
     $data = $response.Content | ConvertFrom-Json
     Write-Host "✅ Got notification status" -ForegroundColor Green
     Write-Host "Has Subscription: $($data.hasSubscription)" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "⚠️  User not found (expected for new system)" -ForegroundColor Yellow
 }
 
@@ -83,7 +88,8 @@ try {
         Write-Host "✅ Swagger UI is available at: $BaseUrl/api-docs" -ForegroundColor Green
         Write-Host "Open in browser to explore all endpoints" -ForegroundColor Cyan
     }
-} catch {
+}
+catch {
     Write-Host "❌ Swagger not available: $_" -ForegroundColor Red
 }
 
@@ -99,12 +105,13 @@ if ($shouldReset -eq "yes") {
         $response = Invoke-WebRequest `
             -Uri "$BaseUrl/api/admin/reset/hard" `
             -Method POST `
-            -Headers @{"x-admin-key" = $AdminResetKey} `
+            -Headers @{"x-admin-key" = $AdminResetKey } `
             -UseBasicParsing
         $data = $response.Content | ConvertFrom-Json
         Write-Host "✅ Database reset successful" -ForegroundColor Green
         Write-Host "Cleared: $($data.clearedCollections -join ', ')" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "❌ Reset failed: $_" -ForegroundColor Red
     }
 }
