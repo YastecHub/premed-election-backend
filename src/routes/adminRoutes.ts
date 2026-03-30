@@ -116,19 +116,6 @@ export function createAdminRoutes(_deps?: Deps) {
 
   /**
    * @openapi
-   * /api/admin/election-status:
-   *   get:
-   *     summary: Get current election status
-   *     tags:
-   *       - Admin
-   *     responses:
-   *       200:
-   *         description: Election status information
-   */
-  router.get('/election-status', adminController.getElectionStatus);
-
-  /**
-   * @openapi
    * /api/admin/toggle-election:
    *   post:
    *     summary: Start/pause/resume/stop the election
