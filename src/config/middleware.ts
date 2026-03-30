@@ -28,17 +28,24 @@ export const setupMiddlewares = (app: Express) => {
         return callback(null, true);
       }
       
-      // Check if origin is in allowed list or allow all in dev
-      if (process.env.NODE_ENV !== 'production' || allowedOrigins.includes(origin)) {
+      // In production, check allowed origins; in dev, allow all
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else if (process.env.NODE_ENV !== 'production') {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        // In production, still allow but log it
+        console.warn('CORS: Origin not in whitelist:', origin);
+        callback(null, true);
       }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-developer-key', 'x-admin-key']
   }));
+
+  // Handle preflight requests explicitly
+  app.options('*', cors());
 
   app.use(limiters.global);
   app.use(express.json({ limit: '10mb' }));

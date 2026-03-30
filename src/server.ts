@@ -59,11 +59,27 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 const start = async () => {
   try {
+    logger.info('Starting server...');
+    
+    logger.info('Connecting to database...');
     await connectDatabase();
+    logger.info('Database connected');
+    
+    logger.info('Loading system config...');
     await getSystemConfig();
+    logger.info('System config loaded');
+    
+    logger.info('Seeding initial data...');
     await seedInitialData();
+    logger.info('Initial data seeded');
 
     const app = express();
+    
+    // Add health check before other middleware
+    app.get('/health', (_req, res) => {
+      res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    });
+    
     server = http.createServer(app);
     io = createSocketServer(server);
     const upload = createUpload();
@@ -91,6 +107,7 @@ const start = async () => {
     });
   } catch (err) {
     logger.error('Server startup failed:', err);
+    logger.error('Error details:', err instanceof Error ? err.stack : String(err));
     process.exit(1);
   }
 };
