@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const CandidateSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  position: { type: String, required: true },
+  categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
   department: { type: String, required: true },
   photoUrl: { type: String, required: true },
   manifesto: { type: String, required: true },

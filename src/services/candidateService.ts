@@ -3,7 +3,7 @@ import { validateCandidate } from '../validators';
 
 export const findAllCandidates = async () => {
   const Candidate = mongoose.models.Candidate;
-  return Candidate.find();
+  return Candidate.find().populate('categoryId', 'name description');
 };
 
 export const createCandidate = async (payload: any) => {

@@ -8,6 +8,7 @@ import { createCandidatesRoutes } from './candidatesRoutes';
 import { createCategoryRoutes } from './categoryRoutes';
 import { createAdminStatsRoutes, createResetRoutes } from './adminStatsRoutes';
 import { createNotificationRoutes } from './notificationRoutes';
+import { createUploadRoutes } from './uploadRoutes';
 import ocrTestRoutes from './ocrTestRoutes';
 
 interface Deps {
@@ -36,5 +37,6 @@ export function registerRoutes(app: Express, deps: Deps) {
   app.get('/api/admins', adminController.list);
   app.use('/api', createCandidatesRoutes());
   app.use('/api', createCategoryRoutes());
+  app.use('/api', createUploadRoutes({ upload: deps.upload }));
   app.use('/api/test/ocr', ocrTestRoutes);
 }
