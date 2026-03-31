@@ -8,7 +8,8 @@
     "build": "tsc",
     "postinstall": "npm run build",
     "start": "node dist/server.js",
-    "seed": "ts-node src/seed.ts"
+    "seed": "ts-node src/seed.ts",
+    "generate-vapid-keys": "ts-node scripts/generateVapidKeys.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
