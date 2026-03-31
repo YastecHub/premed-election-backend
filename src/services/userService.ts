@@ -131,6 +131,25 @@ export const loginWithCode = async (payload: any) => {
   }
 };
 
+export const loginWithMatric = async (matricNumber: string) => {
+  const User = mongoose.models.User;
+  const user = await User.findOne({ matricNumber });
+  
+  if (!user) {
+    const err: any = new Error('User not found. Please register first.');
+    err.status = 404;
+    throw err;
+  }
+
+  if (user.verificationStatus !== 'verified') {
+    const err: any = new Error('Your account is not verified. Please complete registration first.');
+    err.status = 403;
+    throw err;
+  }
+
+  return user;
+};
+
 export const verifyDocumentForUser = async (userId: string, buffer: Buffer) => {
   const session = await mongoose.startSession();
   session.startTransaction();

@@ -116,6 +116,31 @@ export function createRegistrationRoutes(deps: Deps = {}) {
 
   /**
    * @openapi
+   * /api/login:
+   *   post:
+   *     summary: Login with matric number
+   *     tags:
+   *       - Registration
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               matricNumber:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: Logged-in user
+   */
+  router.post('/login', 
+    createLimiterMiddleware(deps.registerLimiter), 
+    registrationController.loginWithMatric
+  );
+
+  /**
+   * @openapi
    * /api/verify:
    *   post:
    *     summary: Submit a verification document for an existing user

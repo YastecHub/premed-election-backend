@@ -51,6 +51,22 @@ export const loginWithCode = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const loginWithMatric = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { matricNumber } = req.body;
+    if (!matricNumber) {
+      const err: any = new Error('Matric number is required');
+      err.status = 400;
+      throw err;
+    }
+
+    const user = await userService.loginWithMatric(matricNumber);
+    return success(res, user);
+  } catch (err) {
+    return next(err);
+  }
+};
+
 export const verify = async (req: any, res: Response, next: NextFunction, deps: any) => {
   const { ocrSemaphore, io } = deps || {};
   const { userId } = req.body || {};
