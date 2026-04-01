@@ -82,7 +82,8 @@ export async function broadcastNotification(
     // Build query based on filter
     const query: any = { pushSubscription: { $exists: true, $ne: null } };
     if (filter?.department) query.department = filter.department;
-    if (filter?.verified !== undefined) query.isVerified = filter.verified;
+    if (filter?.verified === true) query.verificationStatus = 'verified';
+    else if (filter?.verified === false) query.verificationStatus = { $ne: 'verified' };
 
     const users = await User.find(query).select('_id pushSubscription').exec();
     logger.info(`Sending notification to ${users.length} users`);

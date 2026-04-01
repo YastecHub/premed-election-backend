@@ -32,24 +32,9 @@ export const castVote = async (userId: string, candidateId: string, clientIp: st
     throw e;
   }
 
-  try {
-    const Election = mongoose.models.Election;
-    let election = await Election.findById('current_election');
-    if (!election) {
-      election = await Election.create({ _id: 'current_election', votedIps: [] });
-    }
-
-    if (election.votedIps.includes(clientIp)) {
-      const err: any = new Error('You have already voted from this device/network.');
-      err.status = 403;
-      err.code = 'IP_BLACKLISTED';
-      throw err;
-    }
-  } catch (err: any) {
-    const e: any = new Error('Failed to verify voting eligibility');
-    e.status = 500;
-    throw e;
-  }
+  // IP is tracked for audit purposes only — not used as a hard block,
+  // since many students share an IP on university/school networks.
+  // Per-user hasVoted flag is the authoritative duplicate-vote guard.
 
   const lockKey = `lock:user:${userId}`;
   let lockToken: string | null = null;

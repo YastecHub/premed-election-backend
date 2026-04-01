@@ -1,16 +1,6 @@
 import { Candidate, Admin, AccessCode, Category } from '../models';
 import { logger } from '../utils/logger';
 
-const DEFAULT_CANDIDATES = [
-  { name: 'Dr. Sarah "Healer" Ahmed', position: 'Governor', department: 'Medicine & Surgery (MBBS)', photoUrl: 'https://picsum.photos/200/200?random=1', manifesto: 'Better mental health support.', color: 'bg-blue-500' },
-  { name: 'Mike "The Scalpel" Ross', position: 'Governor', department: 'Dentistry', photoUrl: 'https://picsum.photos/200/200?random=2', manifesto: '24/7 Library access.', color: 'bg-emerald-500' },
-  { name: 'Jessica "Neuro" Wu', position: 'Governor', department: 'Pharmacy', photoUrl: 'https://picsum.photos/200/200?random=3', manifesto: 'Transparency in grading.', color: 'bg-purple-500' },
-  { name: 'Chioma Okafor', position: 'President', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Chioma', manifesto: 'Focus on student welfare and academic excellence', voteCount: 0, isActive: true, color: 'bg-blue-500' },
-  { name: 'Tunde Adebayo', position: 'President', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Tunde', manifesto: 'Improving campus infrastructure and student engagement', voteCount: 0, isActive: true, color: 'bg-green-500' },
-  { name: 'Fatima Hassan', position: 'Vice President', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Fatima', manifesto: 'Bridging the gap between students and administration', voteCount: 0, isActive: true, color: 'bg-purple-500' },
-  { name: 'Chukwu Emeka', position: 'Secretary', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Chukwu', manifesto: 'Transparent and effective communication', voteCount: 0, isActive: true, color: 'bg-orange-500' }
-];
-
 const DEFAULT_CATEGORIES = [
   'Pre-med Governor',
   'Assistant Premed',
@@ -22,12 +12,23 @@ const DEFAULT_CATEGORIES = [
   'Treasurer'
 ];
 
+// categoryName maps to a value in DEFAULT_CATEGORIES
+const DEFAULT_CANDIDATES = [
+  { name: 'Dr. Sarah "Healer" Ahmed', categoryName: 'Pre-med Governor', department: 'Medicine & Surgery (MBBS)', photoUrl: 'https://picsum.photos/200/200?random=1', manifesto: 'Better mental health support.', color: 'bg-blue-500' },
+  { name: 'Mike "The Scalpel" Ross', categoryName: 'Pre-med Governor', department: 'Dentistry', photoUrl: 'https://picsum.photos/200/200?random=2', manifesto: '24/7 Library access.', color: 'bg-emerald-500' },
+  { name: 'Jessica "Neuro" Wu', categoryName: 'Pre-med Governor', department: 'Pharmacy', photoUrl: 'https://picsum.photos/200/200?random=3', manifesto: 'Transparency in grading.', color: 'bg-purple-500' },
+  { name: 'Chioma Okafor', categoryName: 'President', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Chioma', manifesto: 'Focus on student welfare and academic excellence', color: 'bg-blue-500' },
+  { name: 'Tunde Adebayo', categoryName: 'President', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Tunde', manifesto: 'Improving campus infrastructure and student engagement', color: 'bg-green-500' },
+  { name: 'Fatima Hassan', categoryName: 'Vice President', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Fatima', manifesto: 'Bridging the gap between students and administration', color: 'bg-purple-500' },
+  { name: 'Chukwu Emeka', categoryName: 'Secretary', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Chukwu', manifesto: 'Transparent and effective communication', color: 'bg-orange-500' }
+];
+
 export async function seedInitialData() {
   logger.info('Seed: Candidate:', typeof Candidate, Candidate?.constructor?.name);
   logger.info('Seed: Admin:', typeof Admin, Admin?.constructor?.name);
   logger.info('Seed: AccessCode:', typeof AccessCode, AccessCode?.constructor?.name);
   logger.info('Seed: Category:', typeof Category, Category?.constructor?.name);
-  
+
   const candidateCount = await Candidate.countDocuments();
   const adminCount = await Admin.countDocuments();
   const accessCodeCount = await AccessCode.countDocuments();
@@ -38,16 +39,43 @@ export async function seedInitialData() {
     return;
   }
 
+  // Seed categories FIRST so candidates can reference them
+  if (Category) {
+    if (await Category.countDocuments() === 0) {
+      await Category.insertMany(DEFAULT_CATEGORIES.map(name => ({ name })));
+      logger.info(`Seeded ${DEFAULT_CATEGORIES.length} categories`);
+    }
+  } else {
+    logger.warn('Category model is undefined, skipping category seeding');
+  }
+
+  // Seed candidates with proper categoryId references
   for (const c of DEFAULT_CANDIDATES) {
     const exists = await Candidate.findOne({ name: c.name }).lean().exec();
     if (!exists) {
-      await Candidate.create(c as any);
+      if (!Category) {
+        logger.warn(`Skipping candidate '${c.name}': Category model unavailable`);
+        continue;
+      }
+      const category = await Category.findOne({ name: c.categoryName }).lean().exec() as any;
+      if (!category) {
+        logger.warn(`Skipping candidate '${c.name}': category '${c.categoryName}' not found`);
+        continue;
+      }
+      const { categoryName, ...candidateData } = c;
+      await Candidate.create({ ...candidateData, categoryId: category._id });
     }
   }
 
+  // Seed admin — credentials from env vars, fallback to defaults with a warning
+  const adminUsername = process.env.ADMIN_USERNAME || 'superadmin';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'password123';
+  if (!process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD) {
+    logger.warn('Using default admin credentials. Set ADMIN_USERNAME and ADMIN_PASSWORD env vars for production.');
+  }
   await Admin.findOneAndUpdate(
-    { username: 'superadmin' },
-    { username: 'superadmin', password: 'password123', role: 'super_admin' },
+    { username: adminUsername },
+    { username: adminUsername, password: adminPassword, role: 'super_admin' },
     { upsert: true }
   ).exec();
 
@@ -60,15 +88,6 @@ export async function seedInitialData() {
 
     await AccessCode.insertMany(accessCodes.map(code => ({ code, isUsed: false })));
     logger.info(`Seeded ${accessCodes.length} access codes`);
-  }
-
-  if (Category) {
-    if (await Category.countDocuments() === 0) {
-      await Category.insertMany(DEFAULT_CATEGORIES.map(name => ({ name })));
-      logger.info(`Seeded ${DEFAULT_CATEGORIES.length} categories`);
-    }
-  } else {
-    logger.warn('Category model is undefined, skipping category seeding');
   }
 
   logger.info('Seeding complete');
