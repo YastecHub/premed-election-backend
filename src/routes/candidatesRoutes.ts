@@ -34,7 +34,7 @@ export function createCandidatesRoutes() {
    *             properties:
    *               name:
    *                 type: string
-   *               position:
+   *               categoryId:
    *                 type: string
    *               department:
    *                 type: string

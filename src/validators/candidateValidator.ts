@@ -1,16 +1,17 @@
 import { validateRequired, validateString, validateNumber, validateBoolean, ValidationError } from './base';
 
-const POSITIONS = ['President', 'Vice President', 'Secretary', 'Governor', 'Treasurer'];
-
 export function validateCandidate(data: any) {
   validateString(data.name, 'name', 2, 100);
-  
+
   const nameRegex = /^[A-Za-z\s"'\-\.]+$/;
   if (!nameRegex.test(data.name)) {
     throw new ValidationError('name', 'Name contains invalid characters');
   }
 
-  validateString(data.position, 'position', 2, 50);
+  validateRequired(data.categoryId, 'categoryId');
+  if (typeof data.categoryId !== 'string' || !/^[a-fA-F0-9]{24}$/.test(data.categoryId)) {
+    throw new ValidationError('categoryId', 'categoryId must be a valid MongoDB ObjectId');
+  }
   validateString(data.department, 'department', 2, 100);
   validateString(data.photoUrl, 'photoUrl', 5, 500);
   

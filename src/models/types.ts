@@ -17,7 +17,8 @@ export interface User {
 export interface Candidate {
   _id: string;
   name: string;
-  position: string;
+  categoryId: string;
+  department: string;
   photoUrl: string;
   manifesto: string;
   voteCount: number;
