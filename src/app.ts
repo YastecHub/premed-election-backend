@@ -48,6 +48,12 @@ export function configureApp(app: Express, deps: Deps = {}) {
   if (deps.io) {
     app.set('io', deps.io);
   }
+  if (deps.acquireLock) {
+    app.set('acquireLock', deps.acquireLock);
+  }
+  if (deps.releaseLock) {
+    app.set('releaseLock', deps.releaseLock);
+  }
 
   registerRoutes(app, {
     io: deps.io,
