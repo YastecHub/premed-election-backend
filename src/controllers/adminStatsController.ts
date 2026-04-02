@@ -86,8 +86,25 @@ export async function getElectionStatus(req: Request, res: Response, next: NextF
     const totalVoted = await User.countDocuments({ hasVoted: true });
     const progressPercent = totalEligible > 0 ? Math.round((totalVoted / totalEligible) * 100) : 0;
 
+    const now = Date.now();
+    let status = 'not_started';
+    let isPaused = false;
+
+    if (!systemConfig?.startTime) {
+      status = 'not_started';
+    } else if (systemConfig.endTime && now >= new Date(systemConfig.endTime).getTime()) {
+      status = 'ended';
+    } else if (systemConfig.isElectionActive) {
+      status = 'active';
+    } else {
+      status = 'paused';
+      isPaused = true;
+    }
+
     success(res, {
+      status,
       isActive: systemConfig?.isElectionActive || false,
+      isPaused,
       startTime: systemConfig?.startTime,
       endTime: systemConfig?.endTime,
       totalEligible,

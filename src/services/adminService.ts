@@ -67,7 +67,7 @@ export const toggleElection = async (action: string, durationParam: number | und
     config.adminSetDurationMinutes = durationMinutes;
     config.updatedAt = new Date();
     await config.save();
-    try { if (io) io.emit('ELECTION_STARTED', { endTime: endTime.toISOString() }); } catch (e) {}
+    try { if (io) io.emit('election_started', { endTime: endTime.toISOString() }); } catch (e) {}
     return {
       action: 'start',
       isActive: true,
@@ -92,7 +92,7 @@ export const toggleElection = async (action: string, durationParam: number | und
     config.isElectionActive = false;
     config.updatedAt = new Date();
     await config.save();
-    try { if (io) io.emit('ELECTION_PAUSED', { endTime: config.endTime ? config.endTime.toISOString() : null }); } catch (e) {}
+    try { if (io) io.emit('election_paused', { endTime: config.endTime ? config.endTime.toISOString() : null }); } catch (e) {}
     return {
       action: 'pause',
       isActive: false,
@@ -115,7 +115,7 @@ export const toggleElection = async (action: string, durationParam: number | und
     config.isElectionActive = true;
     config.updatedAt = new Date();
     await config.save();
-    try { if (io) io.emit('ELECTION_RESUMED', { endTime: config.endTime.toISOString() }); } catch (e) {}
+    try { if (io) io.emit('election_resumed', { endTime: config.endTime.toISOString() }); } catch (e) {}
     return {
       action: 'resume',
       isActive: true,
@@ -128,7 +128,7 @@ export const toggleElection = async (action: string, durationParam: number | und
     config.endTime = new Date();
     config.updatedAt = new Date();
     await config.save();
-    try { if (io) io.emit('ELECTION_ENDED'); } catch (e) {}
+    try { if (io) io.emit('election_ended'); } catch (e) {}
     return {
       action: 'stop',
       isActive: false,

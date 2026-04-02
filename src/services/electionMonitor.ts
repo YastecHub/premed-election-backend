@@ -12,7 +12,7 @@ export const startElectionMonitoring = (io: any): NodeJS.Timeout => {
         await config.save();
 
         logger.info('Election automatically ended at', new Date().toISOString());
-        io.emit('ELECTION_ENDED');
+        io.emit('election_ended');
       }
     } catch (error) {
       logger.error('Error in election end detection:', error);
