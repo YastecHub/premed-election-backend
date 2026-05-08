@@ -67,6 +67,18 @@ export const loginWithMatric = async (req: Request, res: Response, next: NextFun
   }
 };
 
+export const loginWithMatricAndName = async (req: Request, res: Response, next: NextFunction, deps: any) => {
+  const { io } = deps || {};
+  try {
+    const { matricNumber, lastName } = req.body;
+    const user = await userService.loginWithMatricAndName({ matricNumber, lastName });
+    if (io) io.emit('user_status_update', user);
+    return success(res, user);
+  } catch (err) {
+    return next(err);
+  }
+};
+
 export const verify = async (req: any, res: Response, next: NextFunction, deps: any) => {
   const { ocrSemaphore, io } = deps || {};
   const { userId } = req.body || {};

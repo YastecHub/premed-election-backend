@@ -134,9 +134,40 @@ export function createRegistrationRoutes(deps: Deps = {}) {
    *       200:
    *         description: Logged-in user
    */
-  router.post('/login', 
-    createLimiterMiddleware(deps.registerLimiter), 
+  router.post('/login',
+    createLimiterMiddleware(deps.registerLimiter),
     registrationController.loginWithMatric
+  );
+
+  /**
+   * @openapi
+   * /api/login-approved:
+   *   post:
+   *     summary: Login with matric number + last name (pre-approved voter list)
+   *     tags:
+   *       - Registration
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               matricNumber:
+   *                 type: string
+   *               lastName:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: Logged-in user (verified)
+   *       404:
+   *         description: Matric not on approved list
+   *       403:
+   *         description: Name does not match records
+   */
+  router.post('/login-approved',
+    createLimiterMiddleware(deps.registerLimiter),
+    (req, res, next) => registrationController.loginWithMatricAndName(req, res, next, { io: deps.io })
   );
 
   /**

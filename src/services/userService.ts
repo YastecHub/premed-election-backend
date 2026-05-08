@@ -134,7 +134,7 @@ export const loginWithCode = async (payload: any) => {
 export const loginWithMatric = async (matricNumber: string) => {
   const User = mongoose.models.User;
   const user = await User.findOne({ matricNumber });
-  
+
   if (!user) {
     const err: any = new Error('User not found. Please register first.');
     err.status = 404;
@@ -147,6 +147,59 @@ export const loginWithMatric = async (matricNumber: string) => {
     throw err;
   }
 
+  return user;
+};
+
+/**
+ * Approved-list login: voter authenticates with matric + last name.
+ * Looks up the matric in ApprovedStudent, validates the name token appears in
+ * the stored fullName (case-insensitive), and upserts a verified User record.
+ */
+export const loginWithMatricAndName = async (payload: { matricNumber?: string; lastName?: string }) => {
+  const matricNumber = (payload.matricNumber || '').trim();
+  const lastName = (payload.lastName || '').trim();
+
+  if (!matricNumber || !lastName) {
+    const err: any = new Error('Matric number and last name are required');
+    err.status = 400;
+    throw err;
+  }
+
+  const ApprovedStudent = mongoose.models.ApprovedStudent;
+  const User = mongoose.models.User;
+
+  const approved = await ApprovedStudent.findOne({ matricNumber });
+  if (!approved) {
+    const err: any = new Error('This matric number is not on the approved voter list. Please register manually if you believe this is an error.');
+    err.status = 404;
+    throw err;
+  }
+
+  const nameMatches = approved.fullName.toLowerCase().includes(lastName.toLowerCase());
+  if (!nameMatches) {
+    const err: any = new Error('The name you entered does not match our records for that matric number.');
+    err.status = 403;
+    throw err;
+  }
+
+  const existing = await User.findOne({ matricNumber });
+  if (existing) {
+    if (existing.verificationStatus !== 'verified') {
+      existing.verificationStatus = 'verified';
+      await existing.save();
+    }
+    return existing;
+  }
+
+  const user = new User({
+    matricNumber,
+    fullName: approved.fullName,
+    email: `${matricNumber}@unilag.edu.ng`,
+    department: 'Pre-med',
+    verificationStatus: 'verified',
+    ocrConfidenceScore: 100
+  });
+  await user.save();
   return user;
 };
 

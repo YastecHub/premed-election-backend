@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { User, Candidate, Election, SystemConfig } from '../models';
+import { User, Candidate, Election, SystemConfig, AccessCode } from '../models';
 import { logger } from '../utils/logger';
 import { success } from '../utils/response';
 
@@ -52,6 +52,61 @@ export async function clearVotes(req: Request, res: Response, next: NextFunction
 
     logger.info('Cleared all votes, kept registered users');
     success(res, { message: 'Votes cleared, users still registered' }, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Reset the system to begin a fresh election.
+ * Wipes candidates, access codes, and unverified users.
+ * Keeps verified users (with hasVoted reset), categories, and admins.
+ */
+export async function resetForNewElection(req: Request, res: Response, next: NextFunction) {
+  try {
+    const isAuthorized = process.env.NODE_ENV !== 'production' || req.headers['x-admin-key'] === process.env.ADMIN_RESET_KEY;
+    if (!isAuthorized) {
+      return res.status(403).json({ error: 'Reset only available in dev mode or with valid admin key' });
+    }
+
+    const candidatesDeleted = await Candidate.deleteMany({});
+    const accessCodesDeleted = await AccessCode.deleteMany({});
+    const usersDeleted = await User.deleteMany({});
+
+    await Election.findByIdAndUpdate(
+      'current_election',
+      { votedIps: [], updatedAt: new Date() },
+      { upsert: true }
+    );
+
+    await SystemConfig.findByIdAndUpdate(
+      'election_config',
+      {
+        isElectionActive: false,
+        startTime: null,
+        endTime: null,
+        adminSetDurationMinutes: 0,
+        updatedAt: new Date()
+      },
+      { upsert: true }
+    );
+
+    const io = req.app.get('io');
+    if (io) io.emit('election:reset');
+
+    logger.info(
+      `New election reset: ${candidatesDeleted.deletedCount} candidates, ${accessCodesDeleted.deletedCount} access codes, ${usersDeleted.deletedCount} users deleted`
+    );
+    success(
+      res,
+      {
+        message: 'System reset for new election',
+        candidatesDeleted: candidatesDeleted.deletedCount,
+        accessCodesDeleted: accessCodesDeleted.deletedCount,
+        usersDeleted: usersDeleted.deletedCount
+      },
+      200
+    );
   } catch (err) {
     next(err);
   }

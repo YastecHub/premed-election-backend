@@ -5,3 +5,4 @@ export { SystemConfig } from './systemConfig';
 export { Election } from './election';
 export { AccessCode } from './accessCode';
 export { Category } from './category';
+export { ApprovedStudent } from './approvedStudent';

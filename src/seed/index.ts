@@ -1,5 +1,6 @@
-import { Candidate, Admin, AccessCode, Category } from '../models';
+import { Admin, Category, ApprovedStudent } from '../models';
 import { logger } from '../utils/logger';
+import { APPROVED_STUDENTS } from './approvedStudents';
 
 const DEFAULT_CATEGORIES = [
   'Pre-med Governor',
@@ -12,34 +13,12 @@ const DEFAULT_CATEGORIES = [
   'Treasurer'
 ];
 
-// categoryName maps to a value in DEFAULT_CATEGORIES
-const DEFAULT_CANDIDATES = [
-  { name: 'Dr. Sarah "Healer" Ahmed', categoryName: 'Pre-med Governor', department: 'Medicine & Surgery (MBBS)', photoUrl: 'https://picsum.photos/200/200?random=1', manifesto: 'Better mental health support.', color: 'bg-blue-500' },
-  { name: 'Mike "The Scalpel" Ross', categoryName: 'Pre-med Governor', department: 'Dentistry', photoUrl: 'https://picsum.photos/200/200?random=2', manifesto: '24/7 Library access.', color: 'bg-emerald-500' },
-  { name: 'Jessica "Neuro" Wu', categoryName: 'Pre-med Governor', department: 'Pharmacy', photoUrl: 'https://picsum.photos/200/200?random=3', manifesto: 'Transparency in grading.', color: 'bg-purple-500' },
-  { name: 'Chioma Okafor', categoryName: 'President', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Chioma', manifesto: 'Focus on student welfare and academic excellence', color: 'bg-blue-500' },
-  { name: 'Tunde Adebayo', categoryName: 'President', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Tunde', manifesto: 'Improving campus infrastructure and student engagement', color: 'bg-green-500' },
-  { name: 'Fatima Hassan', categoryName: 'Vice President', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Fatima', manifesto: 'Bridging the gap between students and administration', color: 'bg-purple-500' },
-  { name: 'Chukwu Emeka', categoryName: 'Secretary', department: 'General', photoUrl: 'https://via.placeholder.com/200?text=Chukwu', manifesto: 'Transparent and effective communication', color: 'bg-orange-500' }
-];
-
 export async function seedInitialData() {
-  logger.info('Seed: Candidate:', typeof Candidate, Candidate?.constructor?.name);
   logger.info('Seed: Admin:', typeof Admin, Admin?.constructor?.name);
-  logger.info('Seed: AccessCode:', typeof AccessCode, AccessCode?.constructor?.name);
   logger.info('Seed: Category:', typeof Category, Category?.constructor?.name);
+  logger.info('Seed: ApprovedStudent:', typeof ApprovedStudent, ApprovedStudent?.constructor?.name);
 
-  const candidateCount = await Candidate.countDocuments();
-  const adminCount = await Admin.countDocuments();
-  const accessCodeCount = await AccessCode.countDocuments();
-  const categoryCount = Category ? (await Category.countDocuments()) : 0;
-
-  if (candidateCount > 0 && adminCount > 0 && accessCodeCount > 0 && (Category ? categoryCount > 0 : true)) {
-    logger.info('Database already seeded, skipping...');
-    return;
-  }
-
-  // Seed categories FIRST so candidates can reference them
+  // Seed categories (positions) on first run only
   if (Category) {
     if (await Category.countDocuments() === 0) {
       await Category.insertMany(DEFAULT_CATEGORIES.map(name => ({ name })));
@@ -47,24 +26,6 @@ export async function seedInitialData() {
     }
   } else {
     logger.warn('Category model is undefined, skipping category seeding');
-  }
-
-  // Seed candidates with proper categoryId references
-  for (const c of DEFAULT_CANDIDATES) {
-    const exists = await Candidate.findOne({ name: c.name }).lean().exec();
-    if (!exists) {
-      if (!Category) {
-        logger.warn(`Skipping candidate '${c.name}': Category model unavailable`);
-        continue;
-      }
-      const category = await Category.findOne({ name: c.categoryName }).lean().exec() as any;
-      if (!category) {
-        logger.warn(`Skipping candidate '${c.name}': category '${c.categoryName}' not found`);
-        continue;
-      }
-      const { categoryName, ...candidateData } = c;
-      await Candidate.create({ ...candidateData, categoryId: category._id });
-    }
   }
 
   // Seed admin — credentials from env vars, fallback to defaults with a warning
@@ -79,15 +40,21 @@ export async function seedInitialData() {
     { upsert: true }
   ).exec();
 
-  if (await AccessCode.countDocuments() === 0) {
-    const accessCodes = [
-      "OPL-9012", "MAM-7679", "AFT-2838", "CHR-6515", "ERK-5903",
-      "JSM-9773", "MOG-9972", "PCS-3610", "SAN-6402", "SYM-2320",
-      "VEE-8578", "XOX-8401", "ZAE-8030", "BMZ-4944"
-    ];
-
-    await AccessCode.insertMany(accessCodes.map(code => ({ code, isUsed: false })));
-    logger.info(`Seeded ${accessCodes.length} access codes`);
+  // Seed/sync the approved-students whitelist. Idempotent: upserts each entry by matric.
+  if (ApprovedStudent) {
+    const ops = APPROVED_STUDENTS.map(s => ({
+      updateOne: {
+        filter: { matricNumber: s.matricNumber },
+        update: { $set: { matricNumber: s.matricNumber, fullName: s.fullName } },
+        upsert: true
+      }
+    }));
+    if (ops.length > 0) {
+      const result = await ApprovedStudent.bulkWrite(ops);
+      logger.info(`Approved students synced: ${ops.length} entries (${result.upsertedCount ?? 0} new)`);
+    }
+  } else {
+    logger.warn('ApprovedStudent model is undefined, skipping whitelist seeding');
   }
 
   logger.info('Seeding complete');

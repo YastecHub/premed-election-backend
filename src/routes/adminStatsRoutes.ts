@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { hardReset, clearVotes } from '../controllers/resetController';
+import { hardReset, clearVotes, resetForNewElection } from '../controllers/resetController';
 import { getVoterStats, getPendingUsers, getVotingProgress, getElectionStatus } from '../controllers/adminStatsController';
 
 export function createResetRoutes() {
@@ -36,6 +36,23 @@ export function createResetRoutes() {
    *         description: Votes cleared
    */
   router.post('/reset/votes', clearVotes);
+
+  /**
+   * @openapi
+   * /api/admin/reset/new-election:
+   *   post:
+   *     summary: "Reset the system to start a fresh election (wipe candidates, access codes, and unverified users; keep verified users, categories, and admins)"
+   *     tags:
+   *       - Admin
+   *     security:
+   *       - adminKey: []
+   *     responses:
+   *       200:
+   *         description: System reset for new election
+   *       403:
+   *         description: Not authorized
+   */
+  router.post('/reset/new-election', resetForNewElection);
 
   return router;
 }
