@@ -40,6 +40,26 @@ export async function seedInitialData() {
     { upsert: true }
   ).exec();
 
+  // Additional moderator admins for this election cycle
+  const MODERATOR_ADMINS = [
+    { username: 'Oliver', password: 'oliver123' },
+    { username: 'Oreoluwa', password: 'Ore123' }
+  ];
+  for (const mod of MODERATOR_ADMINS) {
+    await Admin.findOneAndUpdate(
+      { username: mod.username },
+      { username: mod.username, password: mod.password, role: 'moderator' },
+      { upsert: true }
+    ).exec();
+  }
+
+  // Prune any admins outside the allow-list (superadmin + the two moderators)
+  const allowedUsernames = [adminUsername, ...MODERATOR_ADMINS.map(m => m.username)];
+  const pruned = await Admin.deleteMany({ username: { $nin: allowedUsernames } });
+  if (pruned.deletedCount && pruned.deletedCount > 0) {
+    logger.info(`Pruned ${pruned.deletedCount} admin(s) outside the allow-list`);
+  }
+
   // Seed/sync the approved-students whitelist. Idempotent: upserts each entry by matric.
   if (ApprovedStudent) {
     const ops = APPROVED_STUDENTS.map(s => ({
